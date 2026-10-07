@@ -93,7 +93,7 @@ The optional in-browser model is downloaded only after selecting **Enable on-dev
 
 The PWA model is MLC's prebuilt SmolLM2 1.7B Instruct Q4F32 model. The upstream model card lists Apache-2.0; review the [model card](https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct) and the [WebLLM model configuration](https://github.com/mlc-ai/web-llm/blob/main/src/config.ts) before redistribution. These model weights and WebLLM runtime files are downloaded from their upstream hosts after the user opts in; the chat text is passed to the local browser engine, not included in those download requests.
 
-The repo also contains an early native macOS app source and a native Android project. They currently provide the same source-only, non-clinical scope; neither includes health-record storage or voice input. The Android APK still needs to be built with Android Studio/SDK. The PWA is the ready-to-install phone version while native Android packaging is in progress.
+The repo also contains an early native macOS app source and a native Android project. They currently provide the same source-only, non-clinical scope; neither includes health-record storage or voice input. The Android debug APK was built successfully on October 7, 2026. Installation and UI behavior on a physical Android phone remain to be checked.
 
 ### Native Mac app
 
@@ -119,9 +119,15 @@ The Android app source is in `native/android/` and uses Android platform APIs wi
 bash scripts/build_android.sh
 ```
 
-Or open `native/android/` in Android Studio, let Gradle sync, and build/install the debug APK. Java 17 is now installed in this workspace. Android SDK installation is pending explicit acceptance of Google's SDK License Agreement, so the APK has not yet been built here. The project requires SDK platform 35 and Android build-tools; set `ANDROID_HOME` if the SDK is installed somewhere other than `~/Library/Android/sdk`. Each Gradle build copies the shared root source catalog into generated app assets automatically.
+Or open `native/android/` in Android Studio, let Gradle sync, and build/install the debug APK. Java 17, SDK platform 35, and build-tools 35.0.0 are installed in this workspace. The project requires SDK platform 35 and Android build-tools; set `ANDROID_HOME` if the SDK is installed somewhere other than `~/Library/Android/sdk`. Each Gradle build copies the shared root source catalog into generated app assets automatically.
 
-The native Android app uses the device's offline English speech voice when one is available. It disables Listen when no offline English voice is installed. The app requests no internet or microphone permission; source links open in the user's browser. Until the APK is built, install the PWA from the link above using Android Chrome's **Install app** action.
+The build produces `native/android/app/build/outputs/apk/debug/app-debug.apk`. A local copy is available at `dist/Doctor-Agent-android-debug.apk`. This is a debug-signed development build, not a Play Store release. Transfer it to an Android 8.0 or newer phone, open the file, and allow installation from the transferring app if prompted. With a USB-connected device and USB debugging authorized, it can also be installed with:
+
+```sh
+~/Library/Android/sdk/platform-tools/adb install -r dist/Doctor-Agent-android-debug.apk
+```
+
+The native Android app uses the device's offline English speech voice when one is available. It disables Listen when no offline English voice is installed. The app requests no internet or microphone permission; source links open in the user's browser. The PWA remains available from the link above using Android Chrome's **Install app** action.
 
 The native Android response engine can be evaluated without the SDK using Java 17 and Python:
 

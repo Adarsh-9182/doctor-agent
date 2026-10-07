@@ -27,8 +27,7 @@ installButton.addEventListener("click", async () => {
     installHelp.hidden = false;
     installHelp.textContent = "If installation was dismissed, use your browser menu and choose Install app or Add to Home Screen.";
   } else {
-    installHelp.hidden = !installHelp.hidden;
-    installHelp.textContent = "On iPhone or iPad: in Safari, tap Share, then Add to Home Screen. On Android: open the browser menu and choose Install app or Add to Home Screen.";
+    installHelp.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 });
 

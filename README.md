@@ -113,15 +113,15 @@ Then enable **Use local Qwen3 model (Ollama)** in the app. Doctor Agent sends th
 
 ### Native Android project
 
-The Android app source is in `native/android/` and uses Android platform APIs without third-party app libraries. Android SDK and JDK are required to build it. Prepare the shared source catalog and build the debug APK with:
+The Android app source is in `native/android/` and uses Android platform UI APIs plus Google's LiteRT-LM 0.18.0 for optional local inference. Android SDK and JDK 21 are required to build it. Prepare the shared source catalog and build the debug APK with:
 
 ```sh
 bash scripts/build_android.sh
 ```
 
-Or open `native/android/` in Android Studio, let Gradle sync, and build/install the debug APK. Java 17, SDK platform 35, and build-tools 35.0.0 are installed in this workspace. The project requires SDK platform 35 and Android build-tools; set `ANDROID_HOME` if the SDK is installed somewhere other than `~/Library/Android/sdk`. Each Gradle build copies the shared root source catalog into generated app assets automatically.
+Or open `native/android/` in Android Studio, let Gradle sync, and build/install the debug APK. JDK 21, SDK platform 35, and build-tools 35.0.0 are installed in this workspace. The project requires SDK platform 35 and Android build-tools; set `ANDROID_HOME` if the SDK is installed somewhere other than `~/Library/Android/sdk`. Set `JAVA_HOME` to a compatible JDK 21 installation; the script detects Homebrew JDK 21 on Macs. Each Gradle build copies the shared root source catalog into generated app assets automatically.
 
-The build produces `native/android/app/build/outputs/apk/debug/app-debug.apk`. A local copy is available at `dist/Doctor-Agent-android-debug.apk`. This is a debug-signed development build, not a Play Store release. Transfer it to an Android 8.0 or newer phone, open the file, and allow installation from the transferring app if prompted. With a USB-connected device and USB debugging authorized, it can also be installed with:
+The build produces `native/android/app/build/outputs/apk/debug/app-debug.apk`. A local copy is available at `dist/Doctor-Agent-android-debug.apk`. This is a debug-signed development build, not a Play Store release. Transfer it to a supported 64-bit Android 8.0 or newer device, open the file, and allow installation from the transferring app if prompted. With a USB-connected device and USB debugging authorized, it can also be installed with:
 
 ```sh
 ~/Library/Android/sdk/platform-tools/adb install -r dist/Doctor-Agent-android-debug.apk
@@ -142,7 +142,19 @@ Journal data is encrypted with AES-GCM using an Android Keystore key and stored 
 - **Library:** all bundled summaries and links to original sources, with an error message when a browser cannot open a link.
 - **You:** journal management, privacy information, voice availability, and chat controls.
 
-The journal pre-fills today's saved entry and can show all retained entries. Chat and its draft are kept in memory during activity configuration changes, such as rotation; they are not restored after process termination. A session retains at most 80 messages. Copying text explicitly places it on the system clipboard, marked sensitive on supported Android versions. This native version still uses source retrieval rather than a generative AI model. The Mac app and PWA have not received this interface update.
+The journal pre-fills today's saved entry and can show all retained entries. Chat and its draft are kept in memory during activity configuration changes, such as rotation; they are not restored after process termination. A session retains at most 80 messages. Copying text explicitly places it on the system clipboard, marked sensitive on supported Android versions. Source retrieval remains the default; optional generative drafts are described below. The Mac app and PWA have not received this interface update.
+
+#### Optional local AI drafts (0.5.0)
+
+In **You**, choose **Import a model file**, select a CPU-compatible `.litertlm` file, then enable **Add local AI drafts**. No weights are bundled or downloaded automatically. Review the model's own terms before acquiring or importing it. This runtime supports arm64-v8a and x86_64; device/model compatibility and performance have not been measured on the user's phone. A model must be supplied before actual inference can be exercised.
+
+Import copies a file of up to 3 GB into private no-backup storage using a temporary file and atomic replacement. This limit is a storage guard, not a promise that a 3 GB model will run. The model can be removed separately from the journal. The APK is larger because it now includes native inference libraries. The app still has no internet or microphone permission; file providers and external browsers have their own network behavior.
+
+For questions matched to source summaries, the source answer appears first. If enabled, the CPU runtime attempts a separate AI draft using only those summaries and a bounded question. A separate opt-in switch includes up to three recent user questions, capped at 240 characters each. Journal entries and previous model outputs are never supplied. Each generation uses a fresh conversation, a 2048-token context budget, and a 256-token output limit. The switches default off and reset on activity recreation. Source retrieval does not resolve conversational references such as “what about that?” yet.
+
+The draft is labelled unverified and shown beside its source context, not as a verified answer. Urgent-care, medication-boundary, and uncovered-topic responses bypass generation. A basic output filter rejects certain medication/diagnostic language, URLs, empty responses, and oversized drafts; it does not prove factual grounding or clinical safety. Inference failures retain the source answer. Stop, a new question, clearing chat, or leaving the foreground invalidates pending drafts and requests cancellation. A 60-second timer also requests cancellation; loading/native code may not stop immediately. Runtime crashes and excessive memory use remain possible with incompatible files.
+
+LiteRT-LM is pinned to 0.18.0. Its released license and third-party notices are bundled in `app/src/main/legalAssets/`, included in the APK, and readable offline from **You → Open-source licenses**. See the [official runtime documentation](https://developers.google.com/edge/litert-lm/android). The APK has been compiled, but model import, native generation, timing, cancellation, and UI behavior still require device verification. No clinical validation is claimed.
 
 The native Android response engine can be evaluated without the SDK using Java 17 and Python:
 

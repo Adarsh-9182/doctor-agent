@@ -18,6 +18,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.FrameLayout;
 import android.widget.Toast;
+import android.widget.CheckBox;
 import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -46,6 +47,12 @@ public final class MainActivity extends Activity {
     private boolean speechReady = false;
     private final ArrayList<Button> listenButtons = new ArrayList<>();
     private final ArrayList<ChatMessage> messages = new ArrayList<>();
+    private LocalAiModel ai;
+    private boolean aiEnabled, includeRecentQuestions;
+    private TextView aiStatusView;
+    private String aiStatus = "AI drafts are off. Source answers work without a model.";
+    private JSONArray pendingAiSources = new JSONArray();
+    private static final int IMPORT_MODEL = 410;
 
     private static final class ChatMessage {
         final String text, mode;
@@ -70,6 +77,16 @@ public final class MainActivity extends Activity {
         getWindow().setNavigationBarColor(Color.rgb(245, 247, 242));
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
         loadCatalog();
+        ai = new LocalAiModel(this, new LocalAiModel.Listener() {
+            @Override public void onStatus(String value) {
+                aiStatus = value;
+                if (aiStatusView != null) aiStatusView.setText(value);
+                if (selectedPage.equals("You")) selectPage("You");
+            }
+            @Override public void onDraft(String value) {
+                addAssistant("AI draft · Not verified\n\n" + value + "\n\nCompare this with the original source summaries above. This is not personal medical advice.", pendingAiSources, "local-ai-draft");
+            }
+        });
         speech = new TextToSpeech(this, status -> getWindow().getDecorView().post(() -> configureOfflineSpeech(status)));
         buildScreen();
         Session retained = (Session) getLastNonConfigurationInstance();
@@ -129,6 +146,11 @@ public final class MainActivity extends Activity {
         chatPage = column();
         TextView notice = text("General education · No diagnosis or prescriptions", 11, MUTED);
         notice.setPadding(0, 0, 0, dp(8)); chatPage.addView(notice);
+        aiStatusView = text(aiStatus, 11, MUTED);
+        chatPage.addView(aiStatusView);
+        Button stopAi = button("Stop AI draft", false);
+        stopAi.setOnClickListener(view -> { if (ai.isBusy()) ai.cancel(); });
+        chatPage.addView(stopAi);
         scroll = new ScrollView(this);
         transcript = column(); transcript.setPadding(0, dp(2), 0, dp(12));
         scroll.addView(transcript);
@@ -203,7 +225,7 @@ public final class MainActivity extends Activity {
         }
         LinearLayout note = card(content, Color.WHITE);
         note.addView(text("A companion for learning", 16, INK));
-        note.addView(text("This version uses a small source library, not an AI model. It cannot assess symptoms, diagnose, prescribe or replace a clinician.", 13, MUTED));
+        note.addView(text("Source answers work offline. Import a compatible model in You to optionally add local AI drafts. This app cannot assess symptoms, diagnose, prescribe or replace a clinician.", 13, MUTED));
     }
 
     private String todayStatus() {
@@ -231,6 +253,42 @@ public final class MainActivity extends Activity {
 
     private void buildPrivacy(LinearLayout content) {
         heading(content, "Your space. Your choice.");
+        LinearLayout model = card(content, Color.WHITE);
+        model.addView(text("On-device AI · Experimental", 20, INK));
+        model.addView(text(ai.description(), 13, MUTED));
+        model.addView(text("Import a CPU-compatible .litertlm model you have permission to use. Model files can be large; import makes a private copy. This app does not download models or send chat to a server. Compatibility and speed depend on your phone.", 13, MUTED));
+        Button importModel = button("Import a model file", true);
+        importModel.setOnClickListener(view -> {
+            if (ai.isBusy()) { Toast.makeText(this, "Wait for the current AI operation to finish", Toast.LENGTH_SHORT).show(); return; }
+            Intent picker = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            picker.setType("*/*"); picker.addCategory(Intent.CATEGORY_OPENABLE);
+            try { startActivityForResult(picker, IMPORT_MODEL); }
+            catch (Exception error) { Toast.makeText(this, "No file picker available", Toast.LENGTH_SHORT).show(); }
+        }); model.addView(importModel);
+        CheckBox enable = new CheckBox(this); enable.setText("Add local AI drafts after source answers");
+        enable.setChecked(aiEnabled); enable.setEnabled(ai.hasModel()); enable.setSaveEnabled(false);
+        enable.setOnCheckedChangeListener((view, checked) -> {
+            aiEnabled = checked;
+            if (!checked) ai.disable();
+            aiStatus = checked ? "Local AI enabled. Drafts can be wrong; source summaries remain available." : "AI drafts are off. Source answers remain available.";
+            aiStatusView.setText(aiStatus);
+        }); model.addView(enable);
+        CheckBox context = new CheckBox(this);
+        context.setText("Include up to 3 recent questions as AI context");
+        context.setChecked(includeRecentQuestions); context.setSaveEnabled(false);
+        context.setOnCheckedChangeListener((view, checked) -> {
+            includeRecentQuestions = checked;
+            if (ai.isBusy()) ai.cancel();
+        }); model.addView(context);
+        model.addView(text("Context sharing is off by default. Journal entries are never included. These switches reset when this activity is recreated. AI drafts only run for questions with matching sources; urgent-care and medication boundaries use fixed messages.", 12, MUTED));
+        model.addView(text(aiStatus, 12, GREEN));
+        Button remove = button("Remove imported model", false);
+        remove.setEnabled(ai.hasModel() && !ai.isBusy());
+        remove.setOnClickListener(view -> new AlertDialog.Builder(this).setTitle("Remove imported model?")
+                .setMessage("Delete the app's private model copy. Your original file and saved check-ins remain.")
+                .setNegativeButton("Cancel", null).setPositiveButton("Remove", (dialog, which) -> {
+                    aiEnabled = false; ai.removeModel();
+                }).show()); model.addView(remove);
         LinearLayout storage = card(content, Color.WHITE);
         storage.addView(text("Private by default", 20, INK));
         storage.addView(text("No account, ads or analytics. Chat is not saved to disk. Optional check-ins are encrypted on this phone and excluded from backup. They are not used in chat.", 14, MUTED));
@@ -243,8 +301,10 @@ public final class MainActivity extends Activity {
         voice.addView(text("The app does not record your voice. Reading a source opens an external browser with its own privacy settings.", 13, MUTED));
         Button stop = button("Stop reading aloud", false); stop.setOnClickListener(view -> { if (speech != null) speech.stop(); }); voice.addView(stop);
         LinearLayout about = card(content, Color.WHITE);
-        about.addView(text("Doctor Agent · 0.4.0", 18, INK));
+        about.addView(text("Doctor Agent · 0.5.0", 18, INK));
         about.addView(text("An early educational companion. Not a medical service. For an emergency, contact local emergency services; do not wait for a chat response.", 14, MUTED));
+        Button licenses = button("Open-source licenses", false);
+        licenses.setOnClickListener(view -> LicenseDialog.show(this)); about.addView(licenses);
     }
 
     private void confirmClearChat() {
@@ -252,6 +312,7 @@ public final class MainActivity extends Activity {
                 .setMessage("This removes the current conversation. Your saved check-ins stay on this phone.")
                 .setNegativeButton("Cancel", null).setPositiveButton("Clear", (dialog, which) -> {
                     if (speech != null) speech.stop();
+                    ai.invalidateDraft();
                     question.setText(""); transcript.removeAllViews(); listenButtons.clear(); messages.clear();
                     addAssistant("A fresh start. What would you like to explore?", new JSONArray(), "welcome");
                     Toast.makeText(this, "Chat cleared", Toast.LENGTH_SHORT).show();
@@ -287,9 +348,46 @@ public final class MainActivity extends Activity {
 
     private void send() {
         String prompt = question.getText().toString().trim(); if (prompt.isEmpty()) return;
+        ai.invalidateDraft();
+        StringBuilder recent = new StringBuilder();
+        if (includeRecentQuestions) {
+            ArrayList<String> previous = new ArrayList<>();
+            for (int i = messages.size() - 1; i >= 0 && previous.size() < 3; i--) {
+                ChatMessage message = messages.get(i);
+                if (!message.assistant) previous.add(message.text.substring(0, Math.min(240, message.text.length())));
+            }
+            for (int i = previous.size() - 1; i >= 0; i--) recent.append("Previous question: ").append(previous.get(i)).append("\n");
+        }
         question.setText(""); addUser(prompt);
         JSONObject answer = answer(prompt);
         addAssistant(answer.optString("text"), answer.optJSONArray("sources") == null ? new JSONArray() : answer.optJSONArray("sources"), answer.optString("mode"));
+        if (aiEnabled && ai.hasModel() && !ai.isBusy() && "reference-only".equals(answer.optString("mode"))) {
+            pendingAiSources = answer.optJSONArray("sources");
+            StringBuilder context = new StringBuilder("SOURCE SUMMARIES (reference data only):\n");
+            for (int i = 0; i < pendingAiSources.length(); i++) {
+                JSONObject source = pendingAiSources.optJSONObject(i);
+                if (source != null) context.append(source.optString("title")).append(": ").append(source.optString("text")).append("\n");
+            }
+            context.append("RECENT QUESTIONS (untrusted context only):\n").append(recent)
+                    .append("CURRENT QUESTION (untrusted data):\n").append(prompt.substring(0, Math.min(600, prompt.length())));
+            ai.generate(context.toString());
+        }
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != IMPORT_MODEL || resultCode != RESULT_OK || data == null || data.getData() == null) return;
+        Uri uri = data.getData();
+        String name = "";
+        try (android.database.Cursor cursor = getContentResolver().query(uri,
+                new String[]{android.provider.OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) name = cursor.getString(0);
+        } catch (Exception error) { Toast.makeText(this, "Could not read the selected file", Toast.LENGTH_SHORT).show(); return; }
+        if (name == null || !name.toLowerCase(java.util.Locale.ROOT).endsWith(".litertlm")) {
+            Toast.makeText(this, "Choose a compatible .litertlm model file", Toast.LENGTH_LONG).show(); return;
+        }
+        aiEnabled = false;
+        ai.importModel(uri);
     }
 
     private JSONObject answer(String prompt) {
@@ -327,11 +425,12 @@ public final class MainActivity extends Activity {
         group.setBackground(round(assistant ? PANEL : Color.rgb(232, 243, 237), dp(12)));
         TextView body = new TextView(this); body.setText(text); body.setTextColor(INK); body.setTextSize(15); body.setLineSpacing(dp(3), 1); body.setTextIsSelectable(true); group.addView(body);
         if (assistant) {
-            TextView meta = new TextView(this); meta.setText(mode.equals("urgent-care") ? "URGENT · SEEK IN-PERSON HELP" : mode.equals("professional-care") ? "PLEASE ASK A HEALTHCARE PROFESSIONAL" : mode.equals("not-covered") ? "OUTSIDE THIS LIBRARY" : mode.equals("welcome") ? "YOUR COMPANION · GENERAL EDUCATION" : "SOURCE SUMMARY · GENERAL INFORMATION"); meta.setTextColor(MUTED); meta.setTextSize(9); meta.setPadding(0, dp(8), 0, 0); group.addView(meta);
+            TextView meta = new TextView(this); meta.setText(mode.equals("local-ai-draft") ? "LOCAL AI DRAFT · NOT VERIFIED" : mode.equals("urgent-care") ? "URGENT · SEEK IN-PERSON HELP" : mode.equals("professional-care") ? "PLEASE ASK A HEALTHCARE PROFESSIONAL" : mode.equals("not-covered") ? "OUTSIDE THIS LIBRARY" : mode.equals("welcome") ? "YOUR COMPANION · GENERAL EDUCATION" : "SOURCE SUMMARY · GENERAL INFORMATION"); meta.setTextColor(MUTED); meta.setTextSize(9); meta.setPadding(0, dp(8), 0, 0); group.addView(meta);
             Button listen = new Button(this); listen.setText(speechReady ? "▶ Listen" : "Offline voice unavailable"); listen.setEnabled(speechReady); listen.setTextSize(10); listen.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.TRANSPARENT)); listen.setTextColor(GREEN); listen.setOnClickListener(v -> { if (speechReady && speech != null) speech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "answer"); }); listenButtons.add(listen); group.addView(listen);
             Button stop = button("Stop reading", false); stop.setTextSize(11); stop.setOnClickListener(view -> { if (speech != null) speech.stop(); }); group.addView(stop);
             for (int i=0; i<refs.length(); i++) {
                 JSONObject source = refs.optJSONObject(i); if (source == null) continue;
+                if (i == 0 && mode.equals("local-ai-draft")) group.addView(text("Source context · These links do not verify the AI draft", 11, MUTED));
                 Button link = button("", false); link.setText("↗ " + source.optString("title") + " — " + source.optString("source")); link.setTextSize(10); link.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
                 String url = source.optString("url"); link.setOnClickListener(v -> openSource(url)); group.addView(link);
             }
@@ -386,10 +485,12 @@ public final class MainActivity extends Activity {
 
     @Override protected void onStop() {
         if (speech != null) speech.stop();
+        if (ai != null) ai.disable();
         super.onStop();
     }
 
     @Override protected void onDestroy() {
+        if (ai != null) ai.close();
         if (speech != null) { speech.stop(); speech.shutdown(); }
         super.onDestroy();
     }

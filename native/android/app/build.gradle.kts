@@ -16,8 +16,8 @@ android {
         applicationId = "org.doctoragent.mobile"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.4.0"
+        versionCode = 4
+        versionName = "0.5.0"
     }
 
     compileOptions {
@@ -25,7 +25,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    sourceSets.getByName("main").assets.setSrcDirs(listOf(catalogAssets))
+    sourceSets.getByName("main").assets.setSrcDirs(listOf(catalogAssets, file("src/main/legalAssets")))
 }
 
 tasks.named("preBuild") { dependsOn(prepareCatalog) }
+
+dependencies {
+    implementation("com.google.ai.edge.litertlm:litertlm-android:0.18.0")
+}

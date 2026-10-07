@@ -69,6 +69,11 @@ public final class MainActivity extends Activity {
         privacy.setText("PRIVATE · RUNNING ON THIS PHONE"); privacy.setTextColor(GREEN); privacy.setTextSize(10); privacy.setPadding(0, 0, 0, dp(12));
         root.addView(privacy);
 
+        Button checkIn = new Button(this);
+        checkIn.setText("Daily check-in · optional local journal");
+        checkIn.setOnClickListener(view -> CheckInDialog.show(this));
+        root.addView(checkIn);
+
         TextView notice = new TextView(this);
         notice.setText("General education only. This app cannot diagnose or prescribe and is not a substitute for professional care.");
         notice.setTextColor(Color.rgb(103, 91, 57)); notice.setTextSize(11); notice.setPadding(dp(12), dp(10), dp(12), dp(10));

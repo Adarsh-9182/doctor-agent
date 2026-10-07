@@ -93,7 +93,7 @@ The optional in-browser model is downloaded only after selecting **Enable on-dev
 
 The PWA model is MLC's prebuilt SmolLM2 1.7B Instruct Q4F32 model. The upstream model card lists Apache-2.0; review the [model card](https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct) and the [WebLLM model configuration](https://github.com/mlc-ai/web-llm/blob/main/src/config.ts) before redistribution. These model weights and WebLLM runtime files are downloaded from their upstream hosts after the user opts in; the chat text is passed to the local browser engine, not included in those download requests.
 
-The repo also contains an early native macOS app source and a native Android project. They currently provide the same source-only, non-clinical scope; neither includes health-record storage or voice input. The Android debug APK was built successfully on October 7, 2026. Installation and UI behavior on a physical Android phone remain to be checked.
+The repo also contains an early native macOS app source and a native Android project. They provide general education, not clinical care. Android additionally includes an optional local daily check-in journal; neither app includes voice input. The Android debug APK was built successfully on October 7, 2026. Installation and UI behavior on a physical Android phone remain to be checked.
 
 ### Native Mac app
 
@@ -128,6 +128,12 @@ The build produces `native/android/app/build/outputs/apk/debug/app-debug.apk`. A
 ```
 
 The native Android app uses the device's offline English speech voice when one is available. It disables Listen when no offline English voice is installed. The app requests no internet or microphone permission; source links open in the user's browser. The PWA remains available from the link above using Android Chrome's **Install app** action.
+
+#### Android daily check-in (0.3.0)
+
+Open **Daily check-in** to record sleep hours, a self-rated energy score, and an optional goal. Each save requires selecting the local-save checkbox. There is one entry per local calendar date; another save replaces today's entry. Up to 30 daily entries are retained, and the seven most recent are displayed. These entries are a personal journal, not an assessment or personalized medical advice, and are not passed into chat.
+
+Journal data is encrypted with AES-GCM using an Android Keystore key and stored in the app's private no-backup directory. App backup is disabled. **Delete all saved check-ins** removes the journal after confirmation; clearing chat does not clear the journal. Uninstalling the app also removes its local data. This version has no reminders or account sync. The updated APK must still be exercised on a physical phone; a successful build alone does not establish runtime behavior or clinical safety.
 
 The native Android response engine can be evaluated without the SDK using Java 17 and Python:
 

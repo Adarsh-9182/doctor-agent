@@ -6,6 +6,8 @@ const input = document.querySelector("#question");
 const status = document.querySelector("#status");
 const modelButton = document.querySelector("#model-button");
 const modelStatus = document.querySelector("#model-status");
+const installButton = document.querySelector("#install-button");
+const installHelp = document.querySelector("#install-help");
 const STOP = new Set("a about and are can could do does for give help how i in is it me my of on please should tell the to what when where which why with you your general read mean explain that this from into have does".split(" "));
 const URGENT = /\b(chest pain|can't breathe|cannot breathe|difficulty breathing|trouble breathing|face droop|one-sided weakness|severe bleeding|suicid\w*|overdose)\b/i;
 const MEDICATION = /\b(diagnos\w*|prescrib\w*|dose|dosage|how many (pills|tablets)|should i take|should i stop|should i start)\b/i;
@@ -14,6 +16,21 @@ let catalog = [];
 let engine = null;
 let modelReady = false;
 const history = [];
+let installPrompt = null;
+
+window.addEventListener("beforeinstallprompt", (event) => { event.preventDefault(); installPrompt = event; installButton.textContent = "Install app"; });
+installButton.addEventListener("click", async () => {
+  if (installPrompt) {
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    installPrompt = null;
+    installHelp.hidden = false;
+    installHelp.textContent = "If installation was dismissed, use your browser menu and choose Install app or Add to Home Screen.";
+  } else {
+    installHelp.hidden = !installHelp.hidden;
+    installHelp.textContent = "On iPhone or iPad: in Safari, tap Share, then Add to Home Screen. On Android: open the browser menu and choose Install app or Add to Home Screen.";
+  }
+});
 
 function addMessage(role, text, sources = [], mode = "reference-only") {
   const article = document.createElement("article");

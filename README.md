@@ -58,14 +58,14 @@ python3 -m unittest discover -s tests -v
 
 ## Roadmap
 
-1. Measure retrieval and response quality on clinician-reviewed, synthetic
-   cases before expanding health coverage.
-2. Add opt-in encrypted local profiles, source provenance and user-controlled
-   memory. Add a mobile client only after an API and threat model are reviewed.
-3. Evaluate open models and optional LoRA adapters on a held-out set. Training
-   requires rights-cleared data; synthetic cases test software behavior but do
-   not demonstrate clinical competence.
-4. Add reviewed voice input, document import and connected device data.
+1. Expand the small public-source library and build a clinician-reviewed
+   evaluation set before making answers more detailed.
+2. Test retrieval, safety boundaries, offline behavior and on-device model
+   performance on a range of phones and browsers.
+3. Consider opt-in local health context only after a threat model, encryption
+   design and clear user controls are reviewed.
+4. Add voice input, document import and device health data only with explicit
+   consent and a clear account of what each browser or device shares.
 5. Consider patient-specific assessment only with qualified clinical review,
    jurisdiction-specific regulatory assessment and a monitored pilot.
 
@@ -90,5 +90,7 @@ python3 -m http.server 8000 --directory dist/mobile
 Then open `http://127.0.0.1:8000` on the same computer to preview. For phone installation, the included GitHub Pages workflow builds and publishes the app over HTTPS at `https://adarsh-9182.github.io/doctor-agent/` after Pages is enabled for this repository. On a phone, open that address and use the browser's **Add to Home Screen** / **Install app** action. The cached app shell and source library work offline after the first visit.
 
 The optional in-browser model is downloaded only after selecting **Enable on-device AI**. It requires WebGPU, a compatible browser, internet for the first download, and substantial device memory/storage. The app does not send chat questions to a model server. Model output remains an unvalidated draft and may be wrong; use the linked source material and a qualified clinician for personal concerns. Retrieval-only source answers remain available when the model is unavailable.
+
+The PWA model is MLC's prebuilt SmolLM2 1.7B Instruct Q4F32 model. The upstream model card lists Apache-2.0; review the [model card](https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct) and the [WebLLM model configuration](https://github.com/mlc-ai/web-llm/blob/main/src/config.ts) before redistribution. These model weights and WebLLM runtime files are downloaded from their upstream hosts after the user opts in; the chat text is passed to the local browser engine, not included in those download requests.
 
 This is an installable web app, not a native iOS/Android app. Voice input, health-record storage, device health integrations, and clinical review are not included.

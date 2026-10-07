@@ -1,0 +1,200 @@
+package org.doctoragent.mobile;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.graphics.Color;
+import android.net.Uri;
+import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
+import android.view.Gravity;
+import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
+import java.util.regex.Pattern;
+
+public final class MainActivity extends Activity {
+    private static final int INK = Color.rgb(24, 59, 53);
+    private static final int GREEN = Color.rgb(22, 101, 85);
+    private static final int MUTED = Color.rgb(100, 122, 115);
+    private static final int PANEL = Color.rgb(246, 248, 245);
+    private static final Set<String> STOP = new HashSet<>();
+    private static final Pattern URGENT = Pattern.compile("\\b(chest pain|can't breathe|cannot breathe|difficulty breathing|trouble breathing|face droop|one-sided weakness|severe bleeding|suicid\\w*|overdose)\\b", Pattern.CASE_INSENSITIVE);
+    private static final Pattern MEDICINE = Pattern.compile("\\b(diagnos\\w*|prescrib\\w*|dose|dosage|how many (pills|tablets)|should i take|should i stop|should i start)\\b", Pattern.CASE_INSENSITIVE);
+
+    static {
+        Collections.addAll(STOP, "a about and are can could do does for give help how i in is it me my of on please should tell the to what when where which why with you your information general read mean explain".split(" "));
+    }
+
+    private final ArrayList<JSONObject> catalog = new ArrayList<>();
+    private LinearLayout transcript;
+    private ScrollView scroll;
+    private EditText question;
+    private TextToSpeech speech;
+
+    @Override public void onCreate(Bundle state) {
+        super.onCreate(state);
+        getWindow().setStatusBarColor(Color.rgb(245, 247, 242));
+        getWindow().setNavigationBarColor(Color.rgb(245, 247, 242));
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+        loadCatalog();
+        speech = new TextToSpeech(this, status -> { if (status == TextToSpeech.SUCCESS) speech.setLanguage(Locale.getDefault()); });
+        buildScreen();
+        addAssistant("Hi, I’m Doctor Agent. I can help explore general topics like nutrition, sleep, hydration, food safety, and movement. What would you like to understand?", new JSONArray(), "reference-only");
+    }
+
+    private void buildScreen() {
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(Color.rgb(245, 247, 242));
+        root.setPadding(dp(16), dp(8), dp(16), dp(8));
+
+        TextView title = new TextView(this);
+        title.setText("✚  Doctor Agent"); title.setTextColor(INK); title.setTextSize(20); title.setTypeface(null, 1);
+        root.addView(title, new LinearLayout.LayoutParams(-1, dp(42)));
+        TextView privacy = new TextView(this);
+        privacy.setText("PRIVATE · RUNNING ON THIS PHONE"); privacy.setTextColor(GREEN); privacy.setTextSize(10); privacy.setPadding(0, 0, 0, dp(12));
+        root.addView(privacy);
+
+        TextView notice = new TextView(this);
+        notice.setText("General education only. This app cannot diagnose or prescribe and is not a substitute for professional care.");
+        notice.setTextColor(Color.rgb(103, 91, 57)); notice.setTextSize(11); notice.setPadding(dp(12), dp(10), dp(12), dp(10));
+        notice.setBackground(round(Color.rgb(255, 248, 230), dp(10)));
+        LinearLayout.LayoutParams noticeParams = new LinearLayout.LayoutParams(-1, -2); noticeParams.bottomMargin = dp(10); root.addView(notice, noticeParams);
+
+        scroll = new ScrollView(this);
+        transcript = new LinearLayout(this); transcript.setOrientation(LinearLayout.VERTICAL); transcript.setPadding(dp(1), dp(2), dp(1), dp(12));
+        scroll.addView(transcript);
+        root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+
+        LinearLayout compose = new LinearLayout(this); compose.setOrientation(LinearLayout.HORIZONTAL); compose.setGravity(Gravity.CENTER_VERTICAL);
+        question = new EditText(this); question.setSingleLine(false); question.setMinLines(1); question.setMaxLines(4); question.setTextSize(14);
+        question.setHint("Ask a general health question…"); question.setPadding(dp(12), dp(10), dp(12), dp(10)); question.setBackground(round(Color.WHITE, dp(12)));
+        question.setImeOptions(EditorInfo.IME_ACTION_SEND); question.setOnEditorActionListener((v, action, event) -> { if (action == EditorInfo.IME_ACTION_SEND) { send(); return true; } return false; });
+        compose.addView(question, new LinearLayout.LayoutParams(0, -2, 1));
+        Button send = new Button(this); send.setText("↑"); send.setTextColor(Color.WHITE); send.setBackgroundTintList(android.content.res.ColorStateList.valueOf(GREEN)); send.setOnClickListener(v -> send());
+        LinearLayout.LayoutParams sendParams = new LinearLayout.LayoutParams(dp(52), dp(48)); sendParams.leftMargin = dp(7); compose.addView(send, sendParams);
+        root.addView(compose);
+        TextView session = new TextView(this); session.setText("Questions stay in this app session.  ·  Clear chat"); session.setTextSize(10); session.setTextColor(MUTED); session.setPadding(dp(2), dp(6), 0, 0);
+        session.setOnClickListener(v -> { transcript.removeAllViews(); addAssistant("Chat cleared. What general health topic would you like to explore?", new JSONArray(), "reference-only"); });
+        root.addView(session);
+        setContentView(root);
+    }
+
+    private void send() {
+        String prompt = question.getText().toString().trim(); if (prompt.isEmpty()) return;
+        question.setText(""); addUser(prompt);
+        JSONObject answer = answer(prompt);
+        addAssistant(answer.optString("text"), answer.optJSONArray("sources") == null ? new JSONArray() : answer.optJSONArray("sources"), answer.optString("mode"));
+    }
+
+    private JSONObject answer(String prompt) {
+        String text;
+        String mode;
+        JSONArray sources = new JSONArray();
+        if (URGENT.matcher(prompt).find()) {
+            text = "This could need urgent, in-person help. Contact your local emergency services or crisis line now, or ask someone nearby to help you. I can’t assess emergencies in chat."; mode = "urgent-care";
+        } else if (MEDICINE.matcher(prompt).find()) {
+            text = "I can’t diagnose, prescribe, or recommend starting, stopping, or changing a medicine. A qualified healthcare professional or pharmacist can advise you about your situation. I can help you prepare questions to ask them."; mode = "professional-care";
+        } else {
+            ArrayList<Ranked> ranked = rank(prompt);
+            if (ranked.isEmpty()) {
+                text = "I don’t have a suitable source for that topic in my small library yet. Try a general question about nutrition, sleep, hydration, food safety, or physical activity, or ask a qualified healthcare professional."; mode = "not-covered";
+            } else {
+                int cutoff = Math.max(1, (ranked.get(0).score + 1) / 2);
+                StringBuilder excerpt = new StringBuilder("Here’s what my sources say:\n\n");
+                for (Ranked entry : ranked) {
+                    if (entry.score < cutoff || sources.length() >= 3) continue;
+                    JSONObject source = entry.source;
+                    excerpt.append(source.optString("title")).append(": ").append(source.optString("text")).append("\n\n");
+                    JSONObject citation = new JSONObject();
+                    try { citation.put("title", source.optString("title")); citation.put("source", source.optString("source")); citation.put("url", source.optString("url")); sources.put(citation); } catch (Exception ignored) {}
+                }
+                text = excerpt.append("This is general information, not a personal diagnosis or care plan.").toString(); mode = "reference-only";
+            }
+        }
+        JSONObject result = new JSONObject();
+        try { result.put("text", text); result.put("mode", mode); result.put("sources", sources); } catch (Exception ignored) {}
+        return result;
+    }
+
+    private ArrayList<Ranked> rank(String prompt) {
+        Set<String> query = new HashSet<>();
+        for (String token : tokens(prompt)) if (!STOP.contains(token)) query.add(token);
+        ArrayList<Ranked> ranked = new ArrayList<>();
+        for (JSONObject source : catalog) {
+            Set<String> title = new HashSet<>(tokens(source.optString("title")));
+            Set<String> keywords = new HashSet<>(); JSONArray keys = source.optJSONArray("keywords");
+            if (keys != null) for (int i=0; i<keys.length(); i++) keywords.addAll(tokens(keys.optString(i)));
+            Set<String> body = new HashSet<>(tokens(source.optString("text")));
+            int score = 0;
+            for (String word : query) score += title.contains(word) ? 4 : keywords.contains(word) ? 2 : body.contains(word) ? 1 : 0;
+            if (score > 0) ranked.add(new Ranked(source, score));
+        }
+        ranked.sort((a, b) -> a.score == b.score ? a.source.optString("id").compareTo(b.source.optString("id")) : Integer.compare(b.score, a.score));
+        return ranked;
+    }
+
+    private ArrayList<String> tokens(String value) {
+        ArrayList<String> out = new ArrayList<>();
+        for (String token : value.toLowerCase(Locale.ROOT).split("[^a-z]+")) if (token.length() >= 3) out.add(token);
+        return out;
+    }
+
+    private void addUser(String text) { addBubble(text, false, new JSONArray(), ""); }
+    private void addAssistant(String text, JSONArray refs, String mode) { addBubble(text, true, refs, mode); }
+
+    private void addBubble(String text, boolean assistant, JSONArray refs, String mode) {
+        LinearLayout group = new LinearLayout(this); group.setOrientation(LinearLayout.VERTICAL); group.setPadding(dp(12), dp(10), dp(12), dp(10));
+        group.setBackground(round(assistant ? PANEL : Color.rgb(232, 243, 237), dp(12)));
+        TextView body = new TextView(this); body.setText(text); body.setTextColor(INK); body.setTextSize(13); body.setTextIsSelectable(true); group.addView(body);
+        if (assistant) {
+            TextView meta = new TextView(this); meta.setText(mode.equals("urgent-care") ? "URGENT CARE · GENERAL GUIDANCE" : "SOURCE-LED · GENERAL INFORMATION"); meta.setTextColor(MUTED); meta.setTextSize(9); meta.setPadding(0, dp(8), 0, 0); group.addView(meta);
+            Button listen = new Button(this); listen.setText("▶ Listen"); listen.setTextSize(10); listen.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.TRANSPARENT)); listen.setTextColor(GREEN); listen.setOnClickListener(v -> { if (speech != null) speech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "answer"); }); group.addView(listen);
+            for (int i=0; i<refs.length(); i++) {
+                JSONObject source = refs.optJSONObject(i); if (source == null) continue;
+                Button link = new Button(this); link.setText("↗ " + source.optString("title") + " — " + source.optString("source")); link.setTextSize(10); link.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+                String url = source.optString("url"); link.setOnClickListener(v -> { try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))); } catch (Exception ignored) {} }); group.addView(link);
+            }
+        }
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2); params.bottomMargin = dp(10); transcript.addView(group, params);
+        scroll.post(() -> scroll.fullScroll(View.FOCUS_DOWN));
+    }
+
+    private void loadCatalog() {
+        try (InputStream input = getAssets().open("knowledge.json"); ByteArrayOutputStream bytes = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[4096]; int count; while ((count = input.read(buffer)) != -1) bytes.write(buffer, 0, count);
+            JSONArray array = new JSONArray(bytes.toString(StandardCharsets.UTF_8.name()));
+            for (int i=0; i<array.length(); i++) catalog.add(array.getJSONObject(i));
+        } catch (Exception ignored) { }
+    }
+
+    private android.graphics.drawable.GradientDrawable round(int color, int radius) {
+        android.graphics.drawable.GradientDrawable shape = new android.graphics.drawable.GradientDrawable(); shape.setColor(color); shape.setCornerRadius(radius); return shape;
+    }
+
+    private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
+
+    @Override protected void onDestroy() {
+        if (speech != null) { speech.stop(); speech.shutdown(); }
+        super.onDestroy();
+    }
+
+    private static final class Ranked {
+        final JSONObject source; final int score;
+        Ranked(JSONObject source, int score) { this.source = source; this.score = score; }
+    }
+}

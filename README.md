@@ -93,4 +93,24 @@ The optional in-browser model is downloaded only after selecting **Enable on-dev
 
 The PWA model is MLC's prebuilt SmolLM2 1.7B Instruct Q4F32 model. The upstream model card lists Apache-2.0; review the [model card](https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct) and the [WebLLM model configuration](https://github.com/mlc-ai/web-llm/blob/main/src/config.ts) before redistribution. These model weights and WebLLM runtime files are downloaded from their upstream hosts after the user opts in; the chat text is passed to the local browser engine, not included in those download requests.
 
-This is an installable web app, not a native iOS/Android app. Voice input, health-record storage, device health integrations, and clinical review are not included.
+The repo also contains an early native macOS app source and a native Android project. They currently provide the same source-only, non-clinical scope; neither includes health-record storage or voice input. The Android APK still needs to be built with Android Studio/SDK. The PWA is the ready-to-install phone version while native Android packaging is in progress.
+
+### Native Mac app
+
+On a Mac with Swift command-line tools, build a universal arm64/x86_64 app bundle:
+
+```sh
+bash scripts/build_mac_app.sh
+```
+
+The app bundle is created at `dist/Doctor Agent.app`. It reads the bundled source catalog locally and does not need the Python server or a model download. The ad-hoc signed bundle is for local development; it is not notarized for general distribution.
+
+### Native Android project
+
+The Android app source is in `native/android/` and uses Android platform APIs without third-party app libraries. Android SDK and JDK are required to build it. Prepare the shared source catalog and build the debug APK with:
+
+```sh
+bash scripts/build_android.sh
+```
+
+Or open `native/android/` in Android Studio, let Gradle sync, and build/install the debug APK. This workspace does not currently have the Android SDK or a JDK installed, so the APK has not yet been built here. Until then, install the PWA from the link above using Android Chrome's **Install app** action.

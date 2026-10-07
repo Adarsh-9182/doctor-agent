@@ -5,3 +5,6 @@ __pycache__/
 .env
 *.log
 /dist/
+/native/android/.gradle/
+/native/android/**/build/
+/native/android/app/src/main/assets/knowledge.json

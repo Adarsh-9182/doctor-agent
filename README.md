@@ -103,7 +103,13 @@ On a Mac with Swift command-line tools, build a universal arm64/x86_64 app bundl
 bash scripts/build_mac_app.sh
 ```
 
-The app bundle is created at `dist/Doctor Agent.app`. It reads the bundled source catalog locally and does not need the Python server or a model download. The ad-hoc signed bundle is for local development; it is not notarized for general distribution.
+The app bundle is created at `dist/Doctor Agent.app`. It reads the bundled source catalog locally and does not need the Python server. Its default source-only mode requires no model download. To opt in to conversational wording on this Mac, install Ollama and run:
+
+```sh
+ollama pull qwen3:4b
+```
+
+Then enable **Use local Qwen3 model (Ollama)** in the app. Doctor Agent sends the question and selected public-source excerpts only to the Ollama endpoint on `127.0.0.1`; if the local model is unavailable or fails the output check, it shows the source-only answer. Model output is not clinically validated. The ad-hoc signed app bundle is for local use; it is not notarized for general distribution.
 
 ### Native Android project
 

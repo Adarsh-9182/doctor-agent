@@ -26,16 +26,21 @@ or the agent says the library does not cover the topic.
 
 ### Optional local model
 
-Run a compatible model server on this same computer, then restart the app with
-its loopback address:
+For example, install [Ollama](https://ollama.com/) and download the Qwen3 4B
+model (about 2.5 GB). Model weights are free to download under their published
+license; downloading them uses internet and disk space. Then run Doctor Agent
+with Ollama's local OpenAI-compatible endpoint:
 
 ```sh
-DOCTOR_AGENT_MODEL_URL=http://127.0.0.1:8080/v1/chat/completions python3 app.py
+ollama pull qwen3:4b
+DOCTOR_AGENT_MODEL_URL=http://127.0.0.1:11434/v1/chat/completions \
+DOCTOR_AGENT_MODEL_NAME=qwen3:4b python3 app.py
 ```
 
-The companion refuses non-loopback model URLs. Model selection, downloads and
-hardware requirements depend on the local inference server; model files can be
-large. The retrieval-only mode remains available without one.
+Ollama exposes an OpenAI-compatible local chat endpoint; the companion refuses
+non-loopback model URLs. [Ollama endpoint docs](https://ollama.com/blog/openai-compatibility),
+[Qwen3 4B license](https://huggingface.co/Qwen/Qwen3-4B). Hardware requirements
+depend on the device. The retrieval-only mode works without a model.
 
 ## What works
 

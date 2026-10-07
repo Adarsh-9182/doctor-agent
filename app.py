@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
 KNOWLEDGE = json.loads((ROOT / "knowledge.json").read_text(encoding="utf-8"))
 MODEL_URL = os.environ.get("DOCTOR_AGENT_MODEL_URL", "").strip()
+MODEL_NAME = os.environ.get("DOCTOR_AGENT_MODEL_NAME", "qwen3:4b").strip()
 MAX_REQUEST_BYTES = 8_000
 MAX_QUESTION_CHARS = 2_000
 MODEL_TIMEOUT_SECONDS = 20
@@ -172,7 +173,7 @@ def local_model_answer(question: str, references: list[dict], history: list[dict
         }
     )
     payload = json.dumps(
-        {"model": "local-model", "messages": messages, "temperature": 0.2}
+        {"model": MODEL_NAME, "messages": messages, "temperature": 0.2}
     ).encode()
     request = Request(
         MODEL_URL,

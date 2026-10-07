@@ -1,6 +1,5 @@
 import json
 import unittest
-from pathlib import Path
 from unittest.mock import patch
 
 import app
@@ -38,6 +37,30 @@ class AgentCoreTests(unittest.TestCase):
             with patch.object(app, "local_model_answer", return_value="Take 2 pills daily."):
                 result = app.education_reply("How can I sleep better?")
         self.assertEqual(result["mode"], "reference-only")
+
+    def test_configured_model_name_is_sent_to_local_endpoint(self):
+        class FakeResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return None
+
+            def read(self, _limit):
+                return json.dumps(
+                    {"choices": [{"message": {"content": "Try the cited source for more general information."}}]}
+                ).encode()
+
+        with patch.object(app, "MODEL_URL", "http://127.0.0.1:11434/v1/chat/completions"):
+            with patch.object(app, "MODEL_NAME", "qwen3:4b"):
+                with patch.object(app, "urlopen", return_value=FakeResponse()) as open_url:
+                    answer = app.local_model_answer(
+                        "How can I learn about sleep?", app.find_references("sleep"), []
+                    )
+        request = open_url.call_args.args[0]
+        body = json.loads(request.data)
+        self.assertEqual(body["model"], "qwen3:4b")
+        self.assertTrue(answer)
 
     def test_reference_catalog_has_attribution_and_working_url_shape(self):
         for reference in app.KNOWLEDGE:

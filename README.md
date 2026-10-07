@@ -119,4 +119,14 @@ The Android app source is in `native/android/` and uses Android platform APIs wi
 bash scripts/build_android.sh
 ```
 
-Or open `native/android/` in Android Studio, let Gradle sync, and build/install the debug APK. This workspace does not currently have the Android SDK or a JDK installed, so the APK has not yet been built here. Until then, install the PWA from the link above using Android Chrome's **Install app** action.
+Or open `native/android/` in Android Studio, let Gradle sync, and build/install the debug APK. Java 17 is now installed in this workspace. Android SDK installation is pending explicit acceptance of Google's SDK License Agreement, so the APK has not yet been built here. The project requires SDK platform 35 and Android build-tools; set `ANDROID_HOME` if the SDK is installed somewhere other than `~/Library/Android/sdk`. Each Gradle build copies the shared root source catalog into generated app assets automatically.
+
+The native Android app uses the device's offline English speech voice when one is available. It disables Listen when no offline English voice is installed. The app requests no internet or microphone permission; source links open in the user's browser. Until the APK is built, install the PWA from the link above using Android Chrome's **Install app** action.
+
+The native Android response engine can be evaluated without the SDK using Java 17 and Python:
+
+```sh
+python3 scripts/evaluate_android.py
+```
+
+This runs the shared ten synthetic retrieval/boundary cases plus four additional Java-engine cases against the actual source catalog. Passing them verifies the covered software behaviors, not clinical safety, model accuracy or Android UI behavior.

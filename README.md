@@ -49,6 +49,7 @@ depend on the device. The retrieval-only mode works without a model.
 - Keep each chat in browser memory for the current session only.
 - Optionally hear the answer using browser speech synthesis.
 - Optionally connect a local OpenAI-compatible model for grounded wording.
+- Run a 10-case synthetic retrieval/boundary evaluation with `python3 scripts/evaluate.py`.
 - Run the core behavior tests using only the Python standard library:
 
 ```sh

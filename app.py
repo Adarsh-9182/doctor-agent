@@ -23,6 +23,12 @@ MAX_QUESTION_CHARS = 2_000
 MODEL_TIMEOUT_SECONDS = 20
 
 WORDS = re.compile(r"[a-zA-Z]{3,}")
+STOP_WORDS = {
+    "a", "about", "and", "are", "can", "could", "do", "does", "for", "give",
+    "help", "how", "i", "in", "is", "it", "me", "my", "of", "on", "please", "should",
+    "tell", "the", "to", "what", "when", "where", "which", "why", "with",
+    "you", "your", "information", "general", "read", "mean", "explain",
+}
 BLOCKED_CLAIMS = re.compile(
     r"\b(diagnos(?:e|is|ed|ing)|prescrib\w*|dosage|dose of|take \d+|"
     r"stop taking|start taking|you have (?:cancer|diabetes|depression|"
@@ -54,16 +60,36 @@ def model_is_loopback(endpoint: str) -> bool:
 
 def find_references(question: str, limit: int = 3) -> list[dict]:
     """Rank catalog entries by simple token overlap without external services."""
-    query = {word.lower() for word in WORDS.findall(question)}
+    query = {
+        word.lower()
+        for word in WORDS.findall(question)
+        if word.lower() not in STOP_WORDS
+    }
     ranked: list[tuple[int, dict]] = []
     for item in KNOWLEDGE:
-        searchable = f"{item['title']} {item['text']}"
-        tokens = {word.lower() for word in WORDS.findall(searchable)}
-        score = len(query & tokens)
+        title_tokens = {word.lower() for word in WORDS.findall(item["title"])}
+        keyword_tokens = {
+            word.lower()
+            for keyword in item.get("keywords", [])
+            for word in WORDS.findall(keyword)
+        }
+        body_tokens = {word.lower() for word in WORDS.findall(item["text"])}
+        score = sum(
+            4 if token in title_tokens else 2 if token in keyword_tokens else 1
+            if token in body_tokens else 0
+            for token in query
+        )
         if score:
             ranked.append((score, item))
     ranked.sort(key=lambda pair: (-pair[0], pair[1]["id"]))
-    return [item for _, item in ranked[:limit]]
+    if not ranked:
+        return []
+    minimum_relevance = max(1, (ranked[0][0] + 1) // 2)
+    return [
+        item
+        for score, item in ranked[:limit]
+        if score >= minimum_relevance
+    ]
 
 
 def urgent_reply() -> dict:
@@ -184,8 +210,11 @@ def local_model_answer(question: str, references: list[dict], history: list[dict
     try:
         with urlopen(request, timeout=MODEL_TIMEOUT_SECONDS) as response:
             raw = json.loads(response.read(64_000))
-        answer = raw["choices"][0]["message"]["content"].strip()
-        if not isinstance(answer, str) or not answer or len(answer) > 4_000:
+        answer = raw["choices"][0]["message"]["content"]
+        if not isinstance(answer, str):
+            return None
+        answer = answer.strip()
+        if not answer or len(answer) > 4_000:
             return None
         if BLOCKED_CLAIMS.search(answer):
             return None

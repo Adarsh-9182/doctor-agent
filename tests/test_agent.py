@@ -11,6 +11,10 @@ class AgentCoreTests(unittest.TestCase):
         self.assertTrue(refs)
         self.assertTrue(any("nutrition" in ref["title"].lower() for ref in refs))
 
+    def test_food_safety_question_avoids_unrelated_references(self):
+        refs = app.find_references("How should I handle and store food safely?")
+        self.assertEqual([ref["id"] for ref in refs], ["cdc-food-safety"])
+
     def test_abstains_when_library_has_no_relevant_topic(self):
         result = app.education_reply("Explain a car engine's timing belt")
         self.assertEqual(result["mode"], "not-covered")

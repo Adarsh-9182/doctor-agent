@@ -118,7 +118,7 @@ document.querySelectorAll("[data-prompt]").forEach((button) => {
 fetch("/api/status")
   .then((response) => response.json())
   .then((status) => {
-    engineLabel.textContent = status.model ? "Local model + references" : "Reference mode · no API key";
+    engineLabel.textContent = status.model ? "Local model configured · private" : "Reference mode · no API key";
   })
   .catch(() => {
     engineLabel.textContent = "Local only";

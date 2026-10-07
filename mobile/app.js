@@ -26,6 +26,17 @@ function addMessage(role, text, sources = [], mode = "reference-only") {
   if (role === "assistant") {
     const meta = document.createElement("span"); meta.className = "message-meta";
     meta.textContent = mode === "local-model" ? "ON-DEVICE AI DRAFT · CHECK SOURCES" : "SOURCE-LED · GENERAL INFORMATION"; bubble.append(meta);
+    if ("speechSynthesis" in window) {
+      const listen = document.createElement("button"); listen.className = "listen-button"; listen.type = "button"; listen.textContent = "▶ Listen";
+      listen.setAttribute("aria-label", "Read this answer aloud");
+      listen.addEventListener("click", () => {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = document.documentElement.lang || "en";
+        window.speechSynthesis.speak(utterance);
+      });
+      bubble.append(listen);
+    }
     if (sources.length) {
       const list = document.createElement("div"); list.className = "sources";
       sources.forEach((source) => { const link = document.createElement("a"); link.href = source.url; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = `↗ ${source.title} — ${source.source}`; list.append(link); });
@@ -94,6 +105,7 @@ form.addEventListener("submit", async (event) => {
 
 input.addEventListener("input", () => { input.style.height = "auto"; input.style.height = `${Math.min(input.scrollHeight, 120)}px`; });
 document.querySelector("#clear-chat").addEventListener("click", () => { history.length = 0; messages.replaceChildren(); addMessage("assistant", "Chat cleared. What general health topic would you like to explore?"); });
+document.addEventListener("visibilitychange", () => { if (document.hidden && "speechSynthesis" in window) window.speechSynthesis.cancel(); });
 
 modelButton.addEventListener("click", async () => {
   if (!navigator.gpu) { modelStatus.textContent = "This browser does not expose WebGPU. Source lookup works here; try a supported desktop browser for on-device AI."; return; }

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "medlineplus-nutrition",
+    "title": "Nutrition",
+    "source": "MedlinePlus: Nutrition",
+    "url": "https://medlineplus.gov/nutrition.html",
+    "text": "Nutrition information covers nutrients, food choices, dietary needs, and eating patterns. Individual needs vary with age, health, culture, and personal circumstances. Use this topic page to explore the source material and discuss individual medical nutrition concerns with a qualified professional."
+  },
+  {
+    "id": "myplate-healthy-eating",
+    "title": "Healthy eating basics",
+    "source": "USDA MyPlate",
+    "url": "https://www.myplate.gov/eat-healthy/what-is-myplate",
+    "text": "MyPlate is a visual guide for building balanced meals from food groups. It offers flexible healthy-eating ideas; a single plate pattern is not a personalized treatment plan and may not fit every person's medical or cultural needs. Explore the USDA guide for practical examples."
+  },
+  {
+    "id": "medlineplus-sleep",
+    "title": "Sleep",
+    "source": "MedlinePlus: Sleep Disorders",
+    "url": "https://medlineplus.gov/sleepdisorders.html",
+    "text": "Sleep supports health and daily functioning. MedlinePlus describes sleep disorders, common symptoms, tests, and treatments. Persistent sleep problems or symptoms affecting daily life deserve an individualized conversation with a qualified healthcare professional."
+  },
+  {
+    "id": "medlineplus-water",
+    "title": "Water in diet",
+    "source": "MedlinePlus: Water in diet",
+    "url": "https://medlineplus.gov/ency/article/002471.htm",
+    "text": "Water is needed for normal body functions. Fluid needs can vary with health, activity, weather, pregnancy, and medicines. Some health conditions require individual fluid guidance; ask a qualified professional for advice specific to your situation."
+  },
+  {
+    "id": "cdc-food-safety",
+    "title": "Food safety",
+    "source": "CDC: About Food Safety",
+    "url": "https://www.cdc.gov/food-safety/about/index.html",
+    "text": "Food safety practices help reduce foodborne illness. CDC guidance covers keeping food clean, separating raw foods, cooking safely, and refrigerating food promptly. Follow the detailed current guidance from CDC for specific handling and storage questions."
+  },
+  {
+    "id": "medlineplus-exercise",
+    "title": "Exercise and physical fitness",
+    "source": "MedlinePlus: Exercise and physical fitness",
+    "url": "https://medlineplus.gov/exerciseandphysicalfitness.html",
+    "text": "Physical activity can support general health. Appropriate activity varies by a person's health, ability, and circumstances. Review MedlinePlus information and ask a healthcare professional about activity that is suitable for an individual medical condition."
+  }
+]

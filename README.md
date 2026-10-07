@@ -77,3 +77,18 @@ Model output is checked for source IDs and blocked treatment claims, but those
 checks cannot establish that an answer is clinically safe. An open model is
 free to download, not necessarily free to run or automatically cleared for
 commercial use. Review each model and data license before distribution.
+
+## Install the phone web app
+
+The standalone mobile web app lives in `mobile/`; it does not use or modify the NutritiScan website. Build its deployable folder with:
+
+```sh
+python3 scripts/build_mobile.py
+python3 -m http.server 8000 --directory dist/mobile
+```
+
+Then open `http://127.0.0.1:8000` on the same computer to preview. For phone installation, the included GitHub Pages workflow builds and publishes the app over HTTPS at `https://adarsh-9182.github.io/doctor-agent/` after Pages is enabled for this repository. On a phone, open that address and use the browser's **Add to Home Screen** / **Install app** action. The cached app shell and source library work offline after the first visit.
+
+The optional in-browser model is downloaded only after selecting **Enable on-device AI**. It requires WebGPU, a compatible browser, internet for the first download, and substantial device memory/storage. The app does not send chat questions to a model server. Model output remains an unvalidated draft and may be wrong; use the linked source material and a qualified clinician for personal concerns. Retrieval-only source answers remain available when the model is unavailable.
+
+This is an installable web app, not a native iOS/Android app. Voice input, health-record storage, device health integrations, and clinical review are not included.

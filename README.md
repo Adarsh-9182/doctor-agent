@@ -135,6 +135,15 @@ Open **Daily check-in** to record sleep hours, a self-rated energy score, and an
 
 Journal data is encrypted with AES-GCM using an Android Keystore key and stored in the app's private no-backup directory. App backup is disabled. **Delete all saved check-ins** removes the journal after confirmation; clearing chat does not clear the journal. Uninstalling the app also removes its local data. This version has no reminders or account sync. The updated APK must still be exercised on a physical phone; a successful build alone does not establish runtime behavior or clinical safety.
 
+#### Android companion interface (0.4.0)
+
+- **Home:** a daily greeting, saved-check-in status, and shortcuts for nutrition, sleep, hydration, and movement.
+- **Chat:** readable source summaries, clearly labelled care boundaries, explicit clipboard copying, offline read-aloud, and stop-reading controls. Clearing chat requires confirmation.
+- **Library:** all bundled summaries and links to original sources, with an error message when a browser cannot open a link.
+- **You:** journal management, privacy information, voice availability, and chat controls.
+
+The journal pre-fills today's saved entry and can show all retained entries. Chat and its draft are kept in memory during activity configuration changes, such as rotation; they are not restored after process termination. A session retains at most 80 messages. Copying text explicitly places it on the system clipboard, marked sensitive on supported Android versions. This native version still uses source retrieval rather than a generative AI model. The Mac app and PWA have not received this interface update.
+
 The native Android response engine can be evaluated without the SDK using Java 17 and Python:
 
 ```sh

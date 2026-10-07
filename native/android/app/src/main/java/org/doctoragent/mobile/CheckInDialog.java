@@ -10,6 +10,10 @@ import org.json.JSONObject;
 
 final class CheckInDialog {
     static void show(Activity activity) {
+        show(activity, () -> {});
+    }
+
+    static void show(Activity activity, Runnable onClose) {
         CheckInStore store = new CheckInStore(activity);
         LinearLayout content = new LinearLayout(activity);
         content.setOrientation(LinearLayout.VERTICAL);
@@ -43,8 +47,29 @@ final class CheckInDialog {
         TextView feedback = label(activity, content, "");
         TextView history = label(activity, content, "");
         boolean readable;
-        try { renderHistory(history, store.read()); readable = true; }
+        JSONArray loaded = new JSONArray();
+        try { loaded = store.read(); renderHistory(history, loaded, false); readable = true; }
         catch (Exception error) { history.setText("Saved entries could not be opened. Nothing was overwritten. You can delete them below."); readable = false; }
+        String today = java.time.LocalDate.now().toString();
+        for (int i = 0; i < loaded.length(); i++) {
+            JSONObject entry = loaded.optJSONObject(i);
+            if (entry != null && today.equals(entry.optString("date"))) {
+                sleep.setText(entry.optString("sleepHours"));
+                energy.setSelection(Math.max(0, Math.min(5, entry.optInt("energy"))));
+                goal.setText(entry.optString("goal"));
+            }
+        }
+        final boolean[] showAll = {false};
+        Button all = new Button(activity);
+        all.setText("Show all saved entries");
+        content.addView(all);
+        all.setOnClickListener(view -> {
+            try {
+                showAll[0] = !showAll[0];
+                renderHistory(history, store.read(), showAll[0]);
+                all.setText(showAll[0] ? "Show recent entries" : "Show all saved entries");
+            } catch (Exception error) { feedback.setText("Saved entries could not be opened."); }
+        });
         Button erase = new Button(activity);
         erase.setText("Delete all saved check-ins");
         content.addView(erase);
@@ -53,6 +78,7 @@ final class CheckInDialog {
         AlertDialog dialog = new AlertDialog.Builder(activity).setTitle("Daily check-in")
                 .setView(scroll).setPositiveButton("Save today", null).setNegativeButton("Close", null).create();
         final boolean[] canRead = {readable};
+        dialog.setOnDismissListener(ignored -> onClose.run());
         dialog.setOnShowListener(ignored -> {
             Button save = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
             save.setEnabled(false);
@@ -65,7 +91,7 @@ final class CheckInDialog {
                 if (energy.getSelectedItemPosition() == 0) { feedback.setText("Choose your energy rating first."); return; }
                 try {
                     store.saveToday(hours, energy.getSelectedItemPosition(), goal.getText().toString().trim());
-                    renderHistory(history, store.read());
+                    renderHistory(history, store.read(), showAll[0]);
                     consent.setChecked(false);
                     feedback.setText("Saved on this phone. You can update today's entry or delete all entries.");
                 } catch (Exception error) { feedback.setText("Could not save the check-in. Please try again."); }
@@ -78,7 +104,7 @@ final class CheckInDialog {
                             canRead[0] = true;
                             consent.setChecked(false);
                             save.setEnabled(false);
-                            renderHistory(history, new JSONArray());
+                            renderHistory(history, new JSONArray(), showAll[0]);
                             feedback.setText("All saved check-ins deleted.");
                         } catch (Exception error) { feedback.setText("Could not delete saved entries. Please try again."); }
                     }).show());
@@ -94,10 +120,10 @@ final class CheckInDialog {
         return label;
     }
 
-    private static void renderHistory(TextView view, JSONArray entries) throws Exception {
+    private static void renderHistory(TextView view, JSONArray entries, boolean all) throws Exception {
         if (entries.length() == 0) { view.setText("No saved check-ins yet."); return; }
-        StringBuilder text = new StringBuilder("Recent check-ins\n");
-        for (int i = entries.length() - 1; i >= Math.max(0, entries.length() - 7); i--) {
+        StringBuilder text = new StringBuilder(all ? "All saved check-ins\n" : "Recent check-ins\n");
+        for (int i = entries.length() - 1; i >= (all ? 0 : Math.max(0, entries.length() - 7)); i--) {
             JSONObject entry = entries.getJSONObject(i);
             text.append("\n").append(entry.getString("date")).append(" · Sleep ")
                     .append(entry.getDouble("sleepHours")).append("h · Energy ").append(entry.getInt("energy")).append("/5\n");

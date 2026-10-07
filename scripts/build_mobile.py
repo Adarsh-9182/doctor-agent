@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import shutil
 import struct
 import zlib
@@ -45,6 +46,15 @@ def main() -> None:
     shutil.copy2(ROOT / "knowledge.json", output / "knowledge.json")
     for size in (180, 192, 512):
         (output / f"icon-{size}.png").write_bytes(png_icon(size))
+    digest = hashlib.sha256()
+    for asset in sorted(path for path in output.iterdir() if path.is_file() and path.name != "sw.js"):
+        digest.update(asset.name.encode())
+        digest.update(asset.read_bytes())
+    service_worker = ROOT / "mobile" / "sw.js"
+    digest.update(service_worker.read_bytes())
+    worker_text = (output / "sw.js").read_text(encoding="utf-8")
+    worker_text = worker_text.replace("__BUILD_ID__", digest.hexdigest()[:12])
+    (output / "sw.js").write_text(worker_text, encoding="utf-8")
     print(f"Built static PWA at {output}")
 
 

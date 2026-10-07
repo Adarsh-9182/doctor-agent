@@ -1,4 +1,4 @@
-const CACHE = "doctor-agent-shell-v1";
+const CACHE = "doctor-agent-shell-__BUILD_ID__";
 const SHELL = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest", "./knowledge.json", "./icon-180.png", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (event) => {

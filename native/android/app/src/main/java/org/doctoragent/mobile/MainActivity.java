@@ -29,6 +29,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public final class MainActivity extends Activity {
     private static final int INK = Color.rgb(24, 59, 53);
@@ -42,6 +43,7 @@ public final class MainActivity extends Activity {
     private String selectedPage = "Home";
     private final ArrayList<Button> tabs = new ArrayList<>();
     private final ArrayList<JSONObject> catalog = new ArrayList<>();
+    private final HashMap<String, JSONObject> localizedCatalog = new HashMap<>();
     private LinearLayout transcript;
     private ScrollView scroll;
     private EditText question;
@@ -54,6 +56,7 @@ public final class MainActivity extends Activity {
     private TextView aiStatusView;
     private String aiStatus = "AI drafts are off. Source answers work without a model.";
     private JSONArray pendingAiSources = new JSONArray();
+    private boolean pendingAiHindi, pendingAiDevanagari;
     private static final int IMPORT_MODEL = 410;
     private static final int MICROPHONE_PERMISSION = 411;
     private static final int NOTIFICATION_PERMISSION = 412;
@@ -92,7 +95,12 @@ public final class MainActivity extends Activity {
                 if (selectedPage.equals("You")) selectPage("You");
             }
             @Override public void onDraft(String value) {
-                addAssistant("AI draft · Not verified\n\n" + value + "\n\nCompare this with the original source summaries above. This is not personal medical advice.", pendingAiSources, "local-ai-draft");
+                String prefix = pendingAiDevanagari ? "AI का मसौदा · सत्यापित नहीं\n\n"
+                        : pendingAiHindi ? "AI draft · verify nahi kiya gaya\n\n" : "AI draft · Not verified\n\n";
+                String suffix = pendingAiDevanagari ? "\n\nइसे मूल स्रोत-सारांश के साथ पढ़ें। यह व्यक्तिगत चिकित्सीय सलाह नहीं है।"
+                        : pendingAiHindi ? "\n\nIse original sources ke saath padhein. Yeh niji medical salah nahi hai."
+                        : "\n\nCompare this with the original source summaries above. This is not personal medical advice.";
+                addAssistant(prefix + value + suffix, pendingAiSources, "local-ai-draft");
             }
         });
         voiceInput = new OfflineVoiceInput(this, new OfflineVoiceInput.Listener() {
@@ -517,6 +525,8 @@ public final class MainActivity extends Activity {
         addAssistant(answer.optString("text"), answer.optJSONArray("sources") == null ? new JSONArray() : answer.optJSONArray("sources"), answer.optString("mode"));
         if (aiEnabled && ai.hasModel() && !ai.isBusy() && "reference-only".equals(answer.optString("mode"))) {
             pendingAiSources = answer.optJSONArray("sources");
+            pendingAiHindi = LocalLanguage.isHindi(prompt);
+            pendingAiDevanagari = LocalLanguage.isDevanagari(prompt);
             StringBuilder context = new StringBuilder("SOURCE SUMMARIES (reference data only):\n");
             for (int i = 0; i < pendingAiSources.length(); i++) {
                 JSONObject source = pendingAiSources.optJSONObject(i);
@@ -638,6 +648,9 @@ public final class MainActivity extends Activity {
             ArrayList<String> keywords = new ArrayList<>();
             JSONArray keys = source.optJSONArray("keywords");
             if (keys != null) for (int i=0; i<keys.length(); i++) keywords.add(keys.optString(i));
+            JSONObject localized = localizedCatalog.get(source.optString("id"));
+            JSONArray localizedKeys = localized == null ? null : localized.optJSONArray("keywords");
+            if (localizedKeys != null) for (int i=0; i<localizedKeys.length(); i++) keywords.add(localizedKeys.optString(i));
             sources.add(new EducationEngine.Source(source.optString("id"), source.optString("title"), keywords, source.optString("text")));
         }
         EducationEngine.Answer answer = EducationEngine.answer(prompt, sources);
@@ -649,8 +662,9 @@ public final class MainActivity extends Activity {
         try { result.put("text", answer.text); result.put("mode", answer.mode); result.put("sources", citations); } catch (Exception ignored) { }
         // Apply the current question's safety boundary before resolving any follow-up.
         if (answer.mode.equals("urgent-care") || answer.mode.equals("professional-care")) return result;
+        boolean hindi = LocalLanguage.isHindi(prompt);
         String normalized = ConversationContext.normalize(prompt);
-        if (ConversationContext.isFollowUp(prompt)) {
+        if (ConversationContext.isFollowUp(prompt) || LocalLanguage.isFollowUp(prompt)) {
             try {
                 ChatMessage previous = previousSourceReply();
                 if (previous == null) {
@@ -666,26 +680,74 @@ public final class MainActivity extends Activity {
                     result.put("text", text.toString()).put("mode", "reference-only").put("sources", previous.refs);
                 }
             } catch (org.json.JSONException ignored) {}
+            if (hindi) localizeReply(result, prompt);
             return result;
         }
-        if (ConversationContext.needsTopic(prompt)) {
+        if (ConversationContext.needsTopic(prompt) || LocalLanguage.needsTopic(prompt)) {
             try {
                 result.put("text", "What would you like to focus on: sleep, nutrition, hydration, food safety, or movement? I can explain the information in my library and help you prepare questions for a healthcare professional. I can't assess symptoms or create a personal treatment plan.")
                         .put("mode", "clarification").put("sources", new JSONArray());
             } catch (org.json.JSONException ignored) {}
+            if (hindi) localizeReply(result, prompt);
             return result;
         }
         if (answer.mode.equals("not-covered")) {
             try {
-                if (normalized.matches("hi|hello|hey|namaste|good morning|good evening|thank you|thanks")) {
-                    result.put("text", normalized.matches("thank you|thanks")
+                if (LocalLanguage.isGreeting(prompt)) {
+                    result.put("text", LocalLanguage.isThanks(prompt)
                             ? "You're welcome. I'm here when you want to explore a topic or take a quiet moment for your daily check-in."
                             : "Hi! I'm here to help you explore general health information, keep a private daily check-in, and work toward everyday habit goals. What would you like to explore?");
                     result.put("mode", "welcome");
                 }
             } catch (Exception ignored) {}
         }
+        if (hindi) localizeReply(result, prompt);
         return result;
+    }
+
+    private String localizedSummary(JSONObject source, boolean devanagari) {
+        JSONObject localized = localizedCatalog.get(source.optString("id"));
+        if (localized == null) return source.optString("title") + ": " + source.optString("text");
+        String titleKey = devanagari ? "title_deva" : "title";
+        String textKey = devanagari ? "text_deva" : "text";
+        return localized.optString(titleKey, localized.optString("title", source.optString("title"))) + ": "
+                + localized.optString(textKey, localized.optString("text", source.optString("text")));
+    }
+
+    private void localizeReply(JSONObject reply, String prompt) {
+        String mode = reply.optString("mode");
+        JSONArray refs = reply.optJSONArray("sources");
+        boolean devanagari = LocalLanguage.isDevanagari(prompt);
+        try {
+            if ("reference-only".equals(mode) && refs != null && refs.length() > 0) {
+                StringBuilder text = new StringBuilder(devanagari ? "मेरे स्रोतों से सामान्य जानकारी:\n\n" : "Mere sources se saamanya jankari:\n\n");
+                JSONArray translatedRefs = new JSONArray();
+                for (int i = 0; i < refs.length(); i++) {
+                    JSONObject source = refs.getJSONObject(i);
+                    text.append(localizedSummary(source, devanagari)).append("\n\n");
+                    JSONObject display = new JSONObject(source.toString());
+                    JSONObject localized = localizedCatalog.get(source.optString("id"));
+                    if (localized != null) display.put("title", localized.optString(devanagari ? "title_deva" : "title", localized.optString("title", source.optString("title"))));
+                    translatedRefs.put(display);
+                }
+                text.append(devanagari ? "यह सामान्य जानकारी है, व्यक्तिगत जाँच या उपचार की सलाह नहीं।"
+                        : "Yeh aam jankari hai, aapke liye niji jaanch ya ilaaj ki salah nahi.");
+                reply.put("text", text.toString()).put("sources", translatedRefs);
+            } else if ("clarification".equals(mode)) {
+                reply.put("text", LocalLanguage.askForTopicMessage(prompt));
+            } else if ("welcome".equals(mode)) {
+                if (LocalLanguage.isThanks(prompt)) reply.put("text", devanagari
+                        ? "कोई बात नहीं। जब चाहें किसी सामान्य स्वास्थ्य विषय पर पूछें या अपना दैनिक चेक-इन करें।"
+                        : "Koi baat nahi. Jab chahein kisi aam health topic par baat karein ya apna daily check-in karein.");
+                else reply.put("text", devanagari
+                        ? "नमस्ते! मैं पोषण, नींद, पानी, खाने की सुरक्षा और शारीरिक गतिविधि की सामान्य जानकारी खोजने में मदद कर सकता हूँ। आप किस बारे में पूछना चाहेंगे?"
+                        : "Namaste! Main poshan, neend, paani, khaane ki suraksha aur sharirik gatividhi par aam jankari dhoondhne mein madad kar sakta hoon. Aap kis baare mein poochhna chahenge?");
+            } else if ("not-covered".equals(mode)) {
+                reply.put("text", devanagari
+                        ? "इस विषय पर मेरी छोटी स्रोत-पुस्तक में उपयुक्त जानकारी नहीं मिली। आप नींद, पोषण, पानी, खाने की सुरक्षा या शारीरिक गतिविधि के बारे में पूछ सकते हैं; या किसी योग्य स्वास्थ्य पेशेवर से बात करें।"
+                        : "Is topic ke liye meri chhoti source library mein munasib jankari nahi mili. Aap neend, poshan, paani, khaane ki suraksha ya sharirik gatividhi ke baare mein poochh sakte hain; ya kisi qualified healthcare professional se baat karein.");
+            }
+        } catch (org.json.JSONException ignored) {}
     }
 
     private void addUser(String text) { addBubble(text, false, new JSONArray(), ""); }
@@ -722,12 +784,24 @@ public final class MainActivity extends Activity {
             TextView meta = new TextView(this); meta.setText(mode.equals("local-ai-draft") ? "LOCAL AI DRAFT · NOT VERIFIED" : mode.equals("urgent-care") ? "URGENT · SEEK IN-PERSON HELP" : mode.equals("professional-care") ? "PLEASE ASK A HEALTHCARE PROFESSIONAL" : mode.equals("not-covered") ? "OUTSIDE THIS LIBRARY" : mode.equals("welcome") ? "YOUR COMPANION · GENERAL EDUCATION" : "SOURCE SUMMARY · GENERAL INFORMATION"); meta.setTextColor(MUTED); meta.setTextSize(9); meta.setPadding(0, dp(8), 0, 0); group.addView(meta);
             if (mode.equals("clarification")) meta.setText("LET'S CHOOSE A TOPIC");
             if (mode.equals("clarification") || mode.equals("not-covered") || mode.equals("welcome")) {
-                group.addView(text("Choose a topic to fill a draft. Review it, then tap Send.", 11, MUTED));
+                boolean lastDevanagari = lastUserUsedDevanagari();
+                group.addView(text(lastDevanagari ? "विषय चुनें। संदेश भेजने से पहले मसौदा पढ़ लें।"
+                        : lastUserUsedHindi() ? "Topic chunein. Bhejne se pehle draft padh lein."
+                        : "Choose a topic to fill a draft. Review it, then tap Send.", 11, MUTED));
                 android.widget.HorizontalScrollView topics = new android.widget.HorizontalScrollView(this);
                 LinearLayout row = new LinearLayout(this);
-                for (String[] topic : new String[][]{{"Sleep", "Tell me about sleep."}, {"Nutrition", "Tell me about nutrition."},
+                String[][] suggestedTopics = lastDevanagari
+                        ? new String[][]{{"नींद", "नींद के बारे में बताइए।"}, {"पोषण", "पोषण के बारे में बताइए।"},
+                        {"पानी", "पानी के बारे में बताइए।"}, {"खाने की सुरक्षा", "खाना सुरक्षित कैसे रखें?"},
+                        {"व्यायाम", "व्यायाम के बारे में बताइए।"}}
+                        : lastUserUsedHindi()
+                        ? new String[][]{{"Neend", "Neend ke baare mein batao."}, {"Poshan", "Poshan ke baare mein batao."},
+                        {"Paani", "Paani ke baare mein batao."}, {"Khaane ki suraksha", "Khaane ko surakshit kaise rakhein?"},
+                        {"Vyayam", "Vyayam ke baare mein batao."}}
+                        : new String[][]{{"Sleep", "Tell me about sleep."}, {"Nutrition", "Tell me about nutrition."},
                         {"Hydration", "Tell me about hydration."}, {"Food safety", "Tell me about food safety."},
-                        {"Movement", "Tell me about physical activity."}}) {
+                        {"Movement", "Tell me about physical activity."}};
+                for (String[] topic : suggestedTopics) {
                     Button choice = button(topic[0], false);
                     choice.setOnClickListener(view -> offerTopic(topic[1])); row.addView(choice);
                 }
@@ -759,12 +833,27 @@ public final class MainActivity extends Activity {
         scroll.post(() -> { if (scroll != null) scroll.fullScroll(View.FOCUS_DOWN); });
     }
 
+    private boolean lastUserUsedHindi() {
+        for (int i = messages.size() - 1; i >= 0; i--) if (!messages.get(i).assistant) return LocalLanguage.isHindi(messages.get(i).text);
+        return false;
+    }
+
+    private boolean lastUserUsedDevanagari() {
+        for (int i = messages.size() - 1; i >= 0; i--) if (!messages.get(i).assistant) return LocalLanguage.isDevanagari(messages.get(i).text);
+        return false;
+    }
+
     private void loadCatalog() {
         try (InputStream input = getAssets().open("knowledge.json"); ByteArrayOutputStream bytes = new ByteArrayOutputStream()) {
             byte[] buffer = new byte[4096]; int count; while ((count = input.read(buffer)) != -1) bytes.write(buffer, 0, count);
             JSONArray array = new JSONArray(bytes.toString(StandardCharsets.UTF_8.name()));
             for (int i=0; i<array.length(); i++) catalog.add(array.getJSONObject(i));
         } catch (Exception ignored) { }
+        try (InputStream input = getAssets().open("knowledge_hi.json"); ByteArrayOutputStream bytes = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[4096]; int count; while ((count = input.read(buffer)) != -1) bytes.write(buffer, 0, count);
+            JSONArray array = new JSONArray(bytes.toString(StandardCharsets.UTF_8.name()));
+            for (int i=0; i<array.length(); i++) { JSONObject entry = array.getJSONObject(i); localizedCatalog.put(entry.optString("id"), entry); }
+        } catch (Exception ignored) { localizedCatalog.clear(); }
     }
 
     private android.graphics.drawable.GradientDrawable round(int color, int radius) {

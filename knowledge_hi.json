@@ -1,0 +1,101 @@
+[
+  {
+    "id": "medlineplus-nutrition",
+    "title": "Poshan aur bhojan",
+    "keywords": [
+      "poshan",
+      "khanapan",
+      "khana",
+      "khaana",
+      "bhojan",
+      "aahar",
+      "santulit",
+      "sehatmand khana"
+    ],
+    "text": "MedlinePlus poshan ki zarooraton aur khane-peene ki pasand ke baare mein jankari deta hai. Khane ka tareeqa sanskriti, pasand aur budget ke hisaab se alag ho sakta hai. Apni kisi khaas medical zaroorat ke liye healthcare professional se salah lein.",
+    "title_deva": "पोषण और भोजन",
+    "text_deva": "MedlinePlus पोषण की ज़रूरतों और खाने-पीने की पसंद के बारे में जानकारी देता है। खाने का तरीका संस्कृति, पसंद और बजट के अनुसार अलग हो सकता है। किसी विशेष चिकित्सीय आवश्यकता के लिए स्वास्थ्य पेशेवर से बात करें।"
+  },
+  {
+    "id": "myplate-healthy-eating",
+    "title": "Santulit bhojan ke buniyadi tareeqe",
+    "keywords": [
+      "santulit bhojan",
+      "healthy eating",
+      "healthy khana",
+      "khaana",
+      "khane ke groups",
+      "myplate"
+    ],
+    "text": "USDA MyPlate alag-alag food groups ko mila kar bhojan banane ke liye ek visual guide hai. Yeh ek aam guide hai; yeh har vyakti ki medical ya sanskritik zaroorat ke mutabik zaroori nahi hoti. Tafseel ke liye original USDA guide dekhein.",
+    "title_deva": "संतुलित भोजन की बुनियादी बातें",
+    "text_deva": "USDA MyPlate, अलग-अलग खाद्य समूहों से भोजन बनाने की एक दृश्य मार्गदर्शिका है। यह एक सामान्य मार्गदर्शिका है; यह हर व्यक्ति की चिकित्सीय या सांस्कृतिक ज़रूरत के अनुकूल हो, यह ज़रूरी नहीं। अधिक जानकारी के लिए USDA की मूल मार्गदर्शिका देखें।"
+  },
+  {
+    "id": "medlineplus-sleep",
+    "title": "Neend",
+    "keywords": [
+      "neend",
+      "nind",
+      "sona",
+      "sone",
+      "aaram",
+      "thakan",
+      "insomnia"
+    ],
+    "text": "Neend sehat aur roz ke kaam-kaaj mein madad karti hai. MedlinePlus par sleep disorders, unke aam lakshan, jaanch aur ilaaj ke baare mein jankari hai. Neend ki dikkat bani rahe ya rozmarra ki zindagi par asar dale, to healthcare professional se apni sthiti par baat karein.",
+    "title_deva": "नींद",
+    "text_deva": "नींद स्वास्थ्य और रोज़मर्रा के कामकाज में मदद करती है। MedlinePlus पर नींद के विकारों, उनके सामान्य लक्षणों, जाँच और उपचार की जानकारी है। नींद की परेशानी बनी रहे या रोज़मर्रा की ज़िंदगी पर असर डाले, तो अपनी स्थिति के बारे में स्वास्थ्य पेशेवर से बात करें।"
+  },
+  {
+    "id": "medlineplus-water",
+    "title": "Paani aur sharir ki zarooratein",
+    "keywords": [
+      "paani",
+      "pani",
+      "jal",
+      "pyaas",
+      "pyas",
+      "hydration",
+      "fluids",
+      "taral"
+    ],
+    "text": "Sharir ke aam kaamon ke liye paani zaroori hai. Paani aur taral ki zaroorat sehat, activity, mausam, pregnancy aur medicines ke hisaab se badal sakti hai. Kisi medical condition mein apni zaroorat ke liye healthcare professional se salah lein.",
+    "title_deva": "पानी और शरीर की ज़रूरतें",
+    "text_deva": "शरीर के सामान्य कामों के लिए पानी ज़रूरी है। पानी और तरल की ज़रूरत स्वास्थ्य, गतिविधि, मौसम, गर्भावस्था और दवाओं के अनुसार बदल सकती है। किसी चिकित्सीय स्थिति में अपनी ज़रूरत के लिए स्वास्थ्य पेशेवर से सलाह लें।"
+  },
+  {
+    "id": "cdc-food-safety",
+    "title": "Khaane ki suraksha",
+    "keywords": [
+      "food safety",
+      "khana safe",
+      "khaana safe",
+      "khana surakshit",
+      "khaane ki suraksha",
+      "khadya suraksha",
+      "khane ka bhandaran",
+      "pakana"
+    ],
+    "text": "CDC ke anusaar food safety ke chaar buniyadi kadam hain: saaf rakhein, kacche aur pake khaane ko alag rakhein, surakshit tareeqe se pakayein, aur samay par thanda karke rakhein. Khaas storage ya cooking sawaalon ke liye CDC ki original hidayat dekhein.",
+    "title_deva": "खाने की सुरक्षा",
+    "text_deva": "CDC के अनुसार खाने की सुरक्षा के चार बुनियादी कदम हैं: साफ़ रखें, कच्चे और पके खाने को अलग रखें, सुरक्षित तरीके से पकाएँ, और समय पर ठंडा करके रखें। खास भंडारण या पकाने के सवालों के लिए CDC की मूल सलाह देखें।"
+  },
+  {
+    "id": "medlineplus-exercise",
+    "title": "Sharirik gatividhi aur fitness",
+    "keywords": [
+      "vyayam",
+      "exercise",
+      "kasrat",
+      "sharirik gatividhi",
+      "chalna",
+      "movement",
+      "workout",
+      "active"
+    ],
+    "text": "Sharirik gatividhi aam sehat mein madad kar sakti hai. Kaunsi activity munasib hai, yeh sehat, kshamata aur paristhitiyon ke hisaab se badalta hai. Kisi medical condition ke liye sahi activity par healthcare professional se baat karein.",
+    "title_deva": "शारीरिक गतिविधि और फिटनेस",
+    "text_deva": "शारीरिक गतिविधि सामान्य स्वास्थ्य में मदद कर सकती है। कौन-सी गतिविधि उचित है, यह स्वास्थ्य, क्षमता और परिस्थितियों के अनुसार बदलता है। किसी चिकित्सीय स्थिति के लिए उपयुक्त गतिविधि पर स्वास्थ्य पेशेवर से बात करें।"
+  }
+]

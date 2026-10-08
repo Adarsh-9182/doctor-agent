@@ -6,7 +6,7 @@ plugins {
 
 val catalogAssets = layout.buildDirectory.dir("generated/catalogAssets")
 val prepareCatalog by tasks.registering(Copy::class) {
-    from(rootProject.file("../../knowledge.json"))
+    from(rootProject.file("../../knowledge.json"), rootProject.file("../../knowledge_hi.json"))
     into(catalogAssets)
 }
 val bundledModelPath = providers.gradleProperty("bundleStarterModel")
@@ -44,8 +44,8 @@ android {
         applicationId = "org.doctoragent.mobile"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10
-        versionName = "0.8.3"
+        versionCode = 11
+        versionName = "0.8.4"
     }
 
     compileOptions {

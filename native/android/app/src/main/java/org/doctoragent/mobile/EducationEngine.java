@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 /** Source-only education logic. No Android APIs, network calls, or storage. */
 public final class EducationEngine {
     private static final Set<String> STOP = new HashSet<>(Arrays.asList("a about and are can could do does for give help how i in is it me my of on please should tell the to what when where which why with you your information general read mean explain".split(" ")));
-    private static final Pattern URGENT = Pattern.compile("\\b(chest pain|can't breathe|cannot breathe|difficulty breathing|trouble breathing|face droop|one-sided weakness|severe bleeding|suicid\\w*|overdose)\\b", Pattern.CASE_INSENSITIVE);
+    private static final Pattern URGENT = Pattern.compile("\\b(chest pain|can't breathe|cannot breathe|difficulty breathing|trouble breathing|shortness of breath|face droop|one-sided weakness|severe bleeding|heavy bleeding|suicid\\w*|want to die|kill myself|end my life|hurt myself|self[- ]harm|overdose)\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern MEDICINE = Pattern.compile("\\b(diagnos\\w*|prescrib\\w*|dose|dosage|how many (pills|tablets)|should i take|should i stop|should i start)\\b", Pattern.CASE_INSENSITIVE);
 
     public static final class Source {
@@ -33,11 +33,15 @@ public final class EducationEngine {
     }
 
     public static Answer answer(String question, List<Source> catalog) {
-        if (URGENT.matcher(question).find()) {
-            return new Answer("This could need urgent, in-person help. Contact your local emergency services or crisis line now, or ask someone nearby to help you. I can’t assess emergencies in chat.", "urgent-care", Collections.emptyList());
+        if (URGENT.matcher(question).find() || LocalLanguage.hasUrgentSignal(question)) {
+            String message = LocalLanguage.isHindi(question) ? LocalLanguage.urgentMessage(question)
+                    : "This could need urgent, in-person help. Contact your local emergency services or crisis line now, or ask someone nearby to help you. I can’t assess emergencies in chat.";
+            return new Answer(message, "urgent-care", Collections.emptyList());
         }
-        if (MEDICINE.matcher(question).find()) {
-            return new Answer("I can’t diagnose, prescribe, or recommend starting, stopping, or changing a medicine. A qualified healthcare professional or pharmacist can advise you about your situation. I can help you prepare questions to ask them.", "professional-care", Collections.emptyList());
+        if (MEDICINE.matcher(question).find() || LocalLanguage.hasMedicationRequest(question)) {
+            String message = LocalLanguage.isHindi(question) ? LocalLanguage.medicationMessage(question)
+                    : "I can’t diagnose, prescribe, or recommend starting, stopping, or changing a medicine. A qualified healthcare professional or pharmacist can advise you about your situation. I can help you prepare questions to ask them.";
+            return new Answer(message, "professional-care", Collections.emptyList());
         }
         Set<String> query = new HashSet<>(tokens(question));
         query.removeAll(STOP);
@@ -69,7 +73,7 @@ public final class EducationEngine {
 
     private static List<String> tokens(String value) {
         List<String> out = new ArrayList<>();
-        for (String token : value.toLowerCase(Locale.ROOT).split("[^a-z]+")) if (token.length() >= 3) out.add(token);
+        for (String token : LocalLanguage.expandTopicAliases(value).toLowerCase(Locale.ROOT).split("[^a-z]+")) if (token.length() >= 3) out.add(token);
         return out;
     }
 

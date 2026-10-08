@@ -3,7 +3,8 @@ set -eu
 PROJECT_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 SDK_PATH="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 ADB_PATH="$SDK_PATH/platform-tools/adb"
-APK_PATH="${1:-$PROJECT_ROOT/dist/Doctor-Agent-android-0.8.0-with-model-debug.apk}"
+ANDROID_VERSION=$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' "$PROJECT_ROOT/native/android/app/build.gradle.kts")
+APK_PATH="${1:-$PROJECT_ROOT/dist/Doctor-Agent-android-$ANDROID_VERSION-with-model-debug.apk}"
 if [ ! -x "$ADB_PATH" ]; then
   printf 'Install Android SDK platform-tools or set ANDROID_HOME.\n' >&2
   exit 1

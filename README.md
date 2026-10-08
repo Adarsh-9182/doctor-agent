@@ -174,12 +174,14 @@ Reboot, clock/timezone changes, and app updates attempt to reschedule an enabled
 
 The manifest now declares `POST_NOTIFICATIONS` and `RECEIVE_BOOT_COMPLETED` alongside optional microphone access. No internet permission, cloud push, exact-alarm permission, or foreground service has been added. Compilation succeeded; scheduled delivery, reboot behavior, permission handling, and notification navigation have not been tested on a phone. Product testing remains deferred at the user's request.
 
-#### Model-included companion, memory and widget (0.8.0)
+#### Model-included companion, memory and widget (0.8.1)
 
 Two debug APKs are produced locally:
 
-- `dist/Doctor-Agent-android-0.8.0-debug.apk`: standard build, without weights.
-- `dist/Doctor-Agent-android-0.8.0-with-model-debug.apk`: includes the pinned Qwen3 0.6B mixed-INT4 starter. No manual model import is needed. Open **You**, enable local AI drafts, then ask a covered topic such as sleep or nutrition in **Chat**.
+- `dist/Doctor-Agent-android-0.8.1-debug.apk`: standard build, without weights.
+- `dist/Doctor-Agent-android-0.8.1-with-model-debug.apk`: includes the pinned Qwen3 0.6B mixed-INT4 starter. No manual model import is needed. Open **You**, enable local AI drafts, then ask a covered topic such as sleep or nutrition in **Chat**.
+
+Version 0.8.1 fixes a chat-template mismatch between the pinned starter model and LiteRT-LM 0.18.0. A local draft was generated in the ARM64 API 37 emulator; physical-phone performance and medical correctness remain unverified. See [runtime evidence and limitations](docs/releases/0.8.1-preview.md).
 
 The starter weighs 497,516,544 bytes. Its immutable repository revision, SHA-256, source URL, and Apache-2.0 license are recorded in `models/starter-model.json`. The model license is bundled and readable from **You → Open-source licenses**. The [upstream model card](https://huggingface.co/litert-community/Qwen3-0.6B) publishes CPU examples; those benchmarks are not measurements of this app or the user's phone. The starter is a general language model, not a medically validated or health-fine-tuned model.
 

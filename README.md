@@ -174,12 +174,14 @@ Reboot, clock/timezone changes, and app updates attempt to reschedule an enabled
 
 The manifest now declares `POST_NOTIFICATIONS` and `RECEIVE_BOOT_COMPLETED` alongside optional microphone access. No internet permission, cloud push, exact-alarm permission, or foreground service has been added. Compilation succeeded; scheduled delivery, reboot behavior, permission handling, and notification navigation have not been tested on a phone. Product testing remains deferred at the user's request.
 
-#### Android companion (0.8.8)
+#### Android companion (0.8.9)
 
 Two debug APKs are produced locally:
 
-- `dist/Doctor-Agent-android-0.8.8-debug.apk`: standard build, without weights.
-- `dist/Doctor-Agent-android-0.8.8-with-model-debug.apk`: includes the pinned Qwen3 0.6B mixed-INT4 starter. No manual model import is needed. Open **You**, enable local AI drafts, then ask a covered topic such as sleep or nutrition in **Chat**.
+- `dist/Doctor-Agent-android-0.8.9-debug.apk`: standard build, without weights.
+- `dist/Doctor-Agent-android-0.8.9-with-model-debug.apk`: includes the pinned Qwen3 0.6B mixed-INT4 starter. No manual model import is needed. Open **You**, enable local AI drafts, then ask a covered topic such as sleep or nutrition in **Chat**.
+
+Version 0.8.9 redesigns the chat interface with a lavender visual system, Chat as the Android opening screen, an animated navigation drawer with encrypted saved-chat shortcuts, a compact composer, grouped answer actions and expandable source evidence. Native Mac and local web apps now have sidebars, session chat snapshots and response-stop controls; desktop session copies disappear when the app closes or the page reloads. The web UI adds light/dark theme switching, responsive navigation, keyboard focus handling and motion preferences. The installable web app receives matching styling and editable topic prompts. This UI update does not establish feature or clinical parity with ChatGPT. See [0.8.9 design scope](docs/releases/0.8.9-preview.md).
 
 Version 0.8.8 adds a **Care** workspace for user-authored symptom and visit notes, with review before adding to Chat. The form stays in memory across tab changes and rotation; only explicitly saved chats persist. It does not infer symptoms, generate a clinical assessment, or automatically share notes with the model. Home and Chat now start with symptoms, reports, medicines, mental health and conditions. The library has 14 linked summaries, including doctor visits, lab-result literacy, medicines, mental health, diabetes, blood pressure, vaccines and pain, with English/Hindi summaries. Report upload, personal result interpretation and clinical diagnosis are not implemented. See [0.8.8 scope and limitations](docs/releases/0.8.8-preview.md).
 

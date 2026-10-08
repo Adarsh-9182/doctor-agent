@@ -37,32 +37,112 @@ struct DoctorAgentView: View {
     @State private var modelStatus = "Source-only answers are ready."
     @State private var lines = [ChatLine(
         role: "assistant",
-        text: "Hi, I’m Doctor Agent. I can help explore general topics like nutrition, sleep, hydration, food safety, and movement. What would you like to understand?"
+        text: "Hi, I’m Doctor Agent.\n\nWhat’s on your mind? Explore general health information about reports, medicines, mental health and conditions."
     )]
     @State private var sources = [HealthSource]()
     @State private var speech = AVSpeechSynthesizer()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var sessionChats = [SessionChat]()
+    @State private var activeSession: UUID?
+    @State private var pendingNewChat = false
+    @State private var pendingChat: SessionChat?
+    @State private var confirmSwitch = false
+    @State private var requestTask: Task<Void, Never>?
+    @State private var requestID = UUID()
+    private struct SessionChat: Identifiable {
+        let id: UUID
+        var title: String
+        var lines: [ChatLine]
+    }
 
-    private let ink = Color(red: 0.09, green: 0.23, blue: 0.20)
-    private let green = Color(red: 0.09, green: 0.40, blue: 0.33)
+    private let ink = Color.primary
+    private let green = Color(red: 0.46, green: 0.33, blue: 0.74)
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            HStack(alignment: .top, spacing: 0) {
-                conversation
-                Divider()
-                sourceLibrary
-            }
-            composer
+        NavigationSplitView {
+            sidebar
+                .navigationSplitViewColumnWidth(min: 230, ideal: 260, max: 300)
+        } detail: {
+            VStack(spacing: 0) { header; conversation; composer }
+                .frame(minWidth: 420)
         }
-        .background(Color(nsColor: .windowBackgroundColor))
-        .foregroundStyle(ink)
+        .tint(green).foregroundStyle(ink)
         .task { loadSources() }
+        .alert("Start a new conversation?", isPresented: $pendingNewChat) {
+            Button("Keep current chat", role: .cancel) {}
+            Button("New conversation") { resetChat() }
+        } message: { Text("The current conversation and draft will be replaced. Use Keep chat first to retain a copy during this session.") }
+        .alert("Open another conversation?", isPresented: $confirmSwitch) {
+            Button("Stay here", role: .cancel) { pendingChat = nil }
+            Button("Open conversation") { if let chat = pendingChat { stopResponse(); question = ""; lines = chat.lines; activeSession = chat.id }; pendingChat = nil }
+        } message: { Text("The current conversation and unsent draft will be replaced. Use Keep chat first to retain a session copy.") }
+        .onDisappear { requestTask?.cancel(); speech.stopSpeaking(at: .immediate) }
+    }
+
+    private var sidebar: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Label("Doctor Agent", systemImage: "sparkle").font(.system(size: 20, weight: .semibold)).padding(.top, 16)
+            Button { if lines.contains(where: { $0.role == "user" }) || !question.isEmpty { pendingNewChat = true } else { resetChat() } }
+                label: { Label("New conversation", systemImage: "plus").frame(maxWidth: .infinity, alignment: .leading).padding(8) }
+                .buttonStyle(.bordered).controlSize(.large)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("EXPLORE YOUR HEALTH").font(.system(size: 9, weight: .semibold)).tracking(1.3).foregroundStyle(.secondary)
+                    topic("Understand reports", "Explain lab reports.", "doc.text")
+                    topic("Medicine questions", "Tell me about medicine safety.", "cross.case")
+                    topic("Mental wellbeing", "Tell me about mental health.", "heart")
+                    topic("Prepare for a visit", "Help me prepare for a doctor visit.", "list.bullet.clipboard")
+                    Divider().padding(.vertical, 8)
+                    Text("SESSION CHATS").font(.system(size: 9, weight: .semibold)).tracking(1.3).foregroundStyle(.secondary)
+                    if sessionChats.isEmpty { Text("Use Keep chat to return to a conversation during this session.").font(.caption).foregroundStyle(.secondary) }
+                    ForEach(sessionChats) { chat in
+                        Button {
+                            if lines.contains(where: { $0.role == "user" }) || !question.isEmpty { pendingChat = chat; confirmSwitch = true }
+                            else { stopResponse(); lines = chat.lines; activeSession = chat.id }
+                        } label: { Text(chat.title).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading).padding(8) }
+                            .buttonStyle(.plain).background(activeSession == chat.id ? green.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 10))
+                            .contextMenu {
+                                Button("Remove session copy") { sessionChats.removeAll { $0.id == chat.id }; if activeSession == chat.id { activeSession = nil } }
+                            }
+                    }
+                    DisclosureGroup("Source library · \(sources.count)") { sourceLibrary }.font(.caption)
+                }
+            }
+            Toggle("Local Qwen3 · Ollama", isOn: $useLocalModel).toggleStyle(.checkbox).font(.caption)
+            Text("Session only. Closing the app clears chats. Model requests go to Ollama on this Mac.").font(.system(size: 10)).foregroundStyle(.secondary)
+        }.padding(18).background(green.opacity(0.035))
+    }
+
+    private func topic(_ title: String, _ prompt: String, _ icon: String) -> some View {
+        Button {
+            guard question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { modelStatus = "Your unsent draft is still here. Send or clear it before choosing a topic."; return }
+            question = prompt
+        } label: { Label(title, systemImage: icon).font(.system(size: 12)).padding(.vertical, 5) }.buttonStyle(.plain)
+    }
+
+    private func keepChat() {
+        guard lines.contains(where: { $0.role == "user" }), !isBusy else { return }
+        if let id = activeSession, let index = sessionChats.firstIndex(where: { $0.id == id }) { sessionChats[index].lines = lines }
+        else {
+            guard sessionChats.count < 20 else { modelStatus = "20 session chats kept. Remove a copy from the sidebar before keeping another."; return }
+            let id = UUID(); activeSession = id
+            sessionChats.insert(SessionChat(id: id, title: String((lines.first { $0.role == "user" }?.text ?? "Health conversation").prefix(60)), lines: lines), at: 0)
+        }
+        modelStatus = "Chat kept for this session. Closing the app clears it."
+    }
+
+    private func stopResponse() {
+        requestID = UUID(); requestTask?.cancel(); requestTask = nil; isBusy = false; speech.stopSpeaking(at: .immediate)
+    }
+
+    private func resetChat() {
+        stopResponse(); question = ""; activeSession = nil
+        lines = [ChatLine(role: "assistant", text: "What’s on your mind? Ask a general health question.")]
     }
 
     private var header: some View {
         HStack(spacing: 12) {
-            Image(systemName: "cross.case.fill")
+            Image(systemName: "sparkle")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.white)
                 .frame(width: 34, height: 34)
@@ -87,8 +167,8 @@ struct DoctorAgentView: View {
             VStack(alignment: .leading, spacing: 7) {
                 Text("YOUR HEALTH, WITH CONTEXT")
                     .font(.system(size: 9, weight: .bold, design: .rounded)).tracking(1.6).foregroundStyle(green)
-                Text("A thoughtful place to start.")
-                    .font(.system(size: 29, weight: .regular, design: .serif))
+                Text("What’s on your mind?")
+                    .font(.system(size: 32, weight: .medium, design: .rounded))
                 Text("Ask a general health question and explore linked public sources.")
                     .font(.system(size: 12)).foregroundStyle(.secondary)
             }
@@ -102,8 +182,6 @@ struct DoctorAgentView: View {
             .padding(11).frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(red: 1, green: 0.97, blue: 0.89), in: RoundedRectangle(cornerRadius: 10))
 
-            Toggle("Use local Qwen3 model (Ollama)", isOn: $useLocalModel)
-                .toggleStyle(.checkbox).font(.system(size: 10, weight: .medium))
             Text(modelStatus).font(.system(size: 9)).foregroundStyle(.secondary).padding(.top, -10)
 
             ScrollViewReader { proxy in
@@ -111,6 +189,7 @@ struct DoctorAgentView: View {
                     LazyVStack(alignment: .leading, spacing: 13) {
                         ForEach(lines) { line in
                             message(line)
+                                .transition(reduceMotion ? .identity : .opacity.combined(with: .move(edge: .bottom)))
                                 .id(line.id)
                         }
                         if isBusy { ProgressView("Finding relevant sources…").font(.caption).tint(green).padding(.leading, 8) }
@@ -118,13 +197,13 @@ struct DoctorAgentView: View {
                     .padding(.vertical, 6)
                 }
                 .onChange(of: lines.count) { _, _ in
-                    if let last = lines.last { withAnimation { proxy.scrollTo(last.id, anchor: .bottom) } }
+                    if let last = lines.last { withAnimation(reduceMotion ? nil : .easeOut(duration: 0.24)) { proxy.scrollTo(last.id, anchor: .bottom) } }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .padding(22)
-        .frame(minWidth: 520, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(minWidth: 400, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     private func message(_ line: ChatLine) -> some View {
@@ -135,7 +214,7 @@ struct DoctorAgentView: View {
                 .frame(width: 27, height: 27)
                 .background(line.role == "assistant" ? green.opacity(0.09) : Color.gray.opacity(0.10), in: RoundedRectangle(cornerRadius: 8))
             VStack(alignment: .leading, spacing: 9) {
-                Text(line.text).font(.system(size: 12)).lineSpacing(4).textSelection(.enabled)
+                Text(line.text).font(.system(size: 14)).lineSpacing(4).textSelection(.enabled)
                 if line.role == "assistant" {
                     HStack(spacing: 12) {
                         Text(line.mode == "urgent-care" ? "URGENT CARE" : line.mode == "local-model" ? "ON-DEVICE AI DRAFT · CHECK SOURCES" : "SOURCE-LED · GENERAL INFORMATION")
@@ -146,6 +225,7 @@ struct DoctorAgentView: View {
                         } label: { Label("Listen", systemImage: "speaker.wave.2").labelStyle(.titleAndIcon) }
                         .buttonStyle(.plain).font(.system(size: 10)).foregroundStyle(green)
                     }
+                    if !line.sources.isEmpty { DisclosureGroup("Sources · \(line.sources.count)") {
                     ForEach(line.sources) { source in
                         if let url = URL(string: source.url) {
                             Link(destination: url) {
@@ -155,9 +235,14 @@ struct DoctorAgentView: View {
                             .tint(green)
                         }
                     }
+                    }.font(.caption).tint(green) }
+                    HStack {
+                        Button("Copy") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(line.text, forType: .string) }
+                        Button("Stop reading") { speech.stopSpeaking(at: .immediate) }
+                    }.buttonStyle(.plain).font(.caption).foregroundStyle(.secondary)
                 }
             }
-            .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16).frame(maxWidth: .infinity, alignment: .leading)
             .background(line.role == "assistant" ? Color(nsColor: .controlBackgroundColor) : green.opacity(0.08), in: RoundedRectangle(cornerRadius: 11))
         }
     }
@@ -185,29 +270,28 @@ struct DoctorAgentView: View {
             Text("Source summaries are a small starting library, not a complete medical reference.")
                 .font(.system(size: 9)).foregroundStyle(.tertiary)
         }
-        .padding(18).frame(minWidth: 280, maxWidth: 280, maxHeight: .infinity, alignment: .topLeading)
+        .padding(.vertical, 12).frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
     private var composer: some View {
-        HStack(alignment: .bottom, spacing: 10) {
-            TextField("Ask a general health question…", text: $question, axis: .vertical)
-                .lineLimit(1...4).textFieldStyle(.plain).font(.system(size: 12))
-                .padding(11)
-                .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 10))
-                .onSubmit { submit() }
-            Button(action: submit) {
-                Image(systemName: "arrow.up").font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
-                    .frame(width: 36, height: 36).background(green, in: RoundedRectangle(cornerRadius: 9))
-            }
-            .buttonStyle(.plain).disabled(question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isBusy)
-            Button {
-                lines = [ChatLine(role: "assistant", text: "Chat cleared. What general health topic would you like to explore?")]
-            } label: { Text("Clear").font(.system(size: 10)) }
-                .buttonStyle(.plain).foregroundStyle(.secondary).padding(.bottom, 9)
-        }
-        .padding(.horizontal, 22).padding(.top, 12).padding(.bottom, 14)
-        .background(.regularMaterial)
-        .overlay(alignment: .top) { Divider() }
+        VStack(spacing: 9) {
+            VStack(spacing: 8) {
+                TextField("Ask a health question…", text: $question, axis: .vertical)
+                    .lineLimit(1...4).textFieldStyle(.plain).font(.system(size: 14)).padding(8).onSubmit { submit() }
+                HStack {
+                    Button("Keep chat") { keepChat() }.buttonStyle(.plain).font(.caption).foregroundStyle(green).disabled(isBusy)
+                    Spacer()
+                    if isBusy { Button("Stop response") { stopResponse(); modelStatus = "Response stopped." }.font(.caption) }
+                    Button(action: submit) {
+                        Image(systemName: "arrow.up").font(.system(size: 16, weight: .bold)).foregroundStyle(.white)
+                            .frame(width: 38, height: 38).background(green, in: RoundedRectangle(cornerRadius: 13))
+                    }.buttonStyle(.plain).disabled(question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isBusy)
+                }
+            }.padding(12).background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 22))
+                .overlay { RoundedRectangle(cornerRadius: 22).strokeBorder(green.opacity(0.18)) }
+            Text("General information · Not clinically validated · Report upload is not available")
+                .font(.system(size: 9)).foregroundStyle(.secondary)
+        }.padding(.horizontal, 22).padding(.bottom, 16)
     }
 
     private func loadSources() {
@@ -223,11 +307,14 @@ struct DoctorAgentView: View {
         question = ""
         lines.append(ChatLine(role: "user", text: prompt))
         isBusy = true
-        Task { @MainActor in
+        let id = UUID(); requestID = id
+        requestTask = Task { @MainActor in
             var answer = respond(prompt)
             if useLocalModel && answer.mode == "reference-only" {
                 modelStatus = "Trying the local Ollama model on this Mac…"
-                if let draft = await localModelAnswer(prompt, sources: answer.sources) {
+                let draft = await localModelAnswer(prompt, sources: answer.sources)
+                guard !Task.isCancelled, requestID == id else { return }
+                if let draft {
                     answer.text = draft
                     answer.mode = "local-model"
                     modelStatus = "Local model answered. Chat text was sent only to Ollama on 127.0.0.1."
@@ -235,8 +322,10 @@ struct DoctorAgentView: View {
                     modelStatus = "Local model unavailable or draft failed safety checks; showing source text."
                 }
             }
+            guard !Task.isCancelled, requestID == id else { return }
             lines.append(ChatLine(role: "assistant", text: answer.text, sources: answer.sources, mode: answer.mode))
-            isBusy = false
+            if lines.count > 80 { lines.removeFirst(lines.count - 80) }
+            isBusy = false; requestTask = nil
         }
     }
 
@@ -250,7 +339,7 @@ struct DoctorAgentView: View {
         }
         let ranked = rank(prompt)
         guard let best = ranked.first else {
-            return ("I don’t have a suitable source for that topic in my small library yet. Try a general question about nutrition, sleep, hydration, food safety, or physical activity, or ask a qualified healthcare professional.", [], "not-covered")
+            return ("I don’t have a suitable source for that topic in my small library yet. Try a general question about medicines, lab reports, mental health, conditions, or doctor visits, or ask a qualified healthcare professional.", [], "not-covered")
         }
         let selected = ranked.filter { $0.score >= max(1, (best.score + 1) / 2) }.prefix(3).map(\.source)
         let excerpts = selected.map { "\($0.title): \($0.text)" }.joined(separator: "\n\n")

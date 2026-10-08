@@ -145,3 +145,9 @@ async function start() {
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
 }
 start();
+
+// Topic suggestions fill a draft; sending remains a separate action.
+document.querySelectorAll("[data-prompt]").forEach(button => button.addEventListener("click", () => {
+  if (input.value.trim() && !confirm("Replace your unsent question with this topic?")) return;
+  input.value = button.dataset.prompt; input.dispatchEvent(new Event("input")); input.focus();
+}));

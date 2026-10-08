@@ -1,54 +1,38 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f7f5ef" />
-    <title>Doctor Agent · A free health companion</title>
-    <link rel="stylesheet" href="/styles.css" />
-  </head>
-  <body>
-    <main class="shell">
-      <header class="topbar">
-        <a class="brand" href="/" aria-label="Doctor Agent home">
-          <span class="brand-mark" aria-hidden="true">✳</span>
-          <span>doctor agent</span>
-        </a>
-        <span class="local-status"><span class="status-dot"></span>Private · runs on this computer</span>
-      </header>
-
-      <section class="intro" aria-labelledby="headline">
-        <p class="eyebrow">YOUR FREE HEALTH COMPANION</p>
-        <h1 id="headline">A little more clarity,<br /><span>one question at a time.</span></h1>
-        <p class="lede">Explore medicines, lab reports, mental health, conditions and preparing for a doctor visit. Answers link back to their sources.</p>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Doctor Agent — your private AI health companion.">
+  <title>Doctor Agent · Health companion</title><link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <button id="backdrop" class="backdrop" aria-label="Close navigation" hidden></button>
+  <aside id="sidebar" class="sidebar" aria-label="Conversation navigation">
+    <a class="brand" href="/" aria-label="Doctor Agent home"><span class="brand-mark">✳</span><span>Doctor Agent<small>YOUR HEALTH COMPANION</small></span></a>
+    <button id="close-menu" class="close-menu" aria-label="Close navigation">×</button>
+    <button id="new-chat" class="new-chat">＋ <span>New conversation</span><span>↗</span></button>
+    <p class="section-label">EXPLORE YOUR HEALTH</p>
+    <nav class="topic-nav" aria-label="Health topics">
+      <button data-prompt="Help me prepare for a doctor visit.">✧ <span>Prepare for a visit</span></button>
+      <button data-prompt="Explain lab reports.">▤ <span>Understand reports</span></button>
+      <button data-prompt="Tell me about medicine safety.">✚ <span>Medicine questions</span></button>
+      <button data-prompt="Tell me about mental health.">♡ <span>Mental wellbeing</span></button>
+    </nav>
+    <div class="history-heading"><p class="section-label">SESSION CHATS</p><button id="save-chat" class="text-button">Keep chat</button></div>
+    <div id="chat-list" class="chat-list"><p class="empty-history">Keep a conversation here to return to it during this session.</p></div>
+    <p id="session-note" class="session-note" role="status">Session only. Reloading clears chats.</p>
+    <div class="sidebar-bottom"><span class="privacy-orb">✓</span><div>Private by design<small>No account · No paid API required</small></div></div>
+  </aside>
+  <main id="workspace" class="workspace">
+    <header class="topbar"><div class="header-title"><button id="menu-button" class="icon-button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">☰</button><span>Health companion <small>✦ Doctor Agent</small></span></div><button id="theme-button" class="icon-button" aria-label="Switch to dark theme">◐</button></header>
+    <div class="conversation">
+      <section id="intro" class="intro" aria-labelledby="headline"><div class="hero-orb" aria-hidden="true">✳</div><p class="eyebrow">A LITTLE CLARITY. A LITTLE CARE.</p><h1 id="headline">What’s on your mind?</h1><p class="lede">A quiet space for health questions,<br>understanding information, and preparing for care.</p>
+        <div class="starter-grid"><button data-prompt="Explain what lab reports can and cannot tell me."><span>▤</span>Understand a report<small>Explore results and medical terms ↗</small></button><button data-prompt="Tell me about medicine safety."><span>✚</span>Ask about medicines<small>Learn the basics of medicine safety ↗</small></button><button data-prompt="Tell me about mental health."><span>♡</span>Check in with your mind<small>Understand mental wellbeing ↗</small></button><button data-prompt="Help me prepare for a doctor visit."><span>✧</span>Prepare for a visit<small>Make room for your questions ↗</small></button></div>
       </section>
-
-      <section class="chat-card" aria-label="Conversation">
-        <div id="messages" class="messages" aria-live="polite" aria-relevant="additions text">
-          <article class="message assistant-message">
-            <span class="avatar" aria-hidden="true">✳</span>
-            <div class="message-body">
-              <p>Hi, I’m Doctor Agent. I can help explore general health information from my small source library. What would you like to understand?</p>
-              <span class="message-meta">SOURCE-LINKED · GENERAL EDUCATION</span>
-            </div>
-          </article>
-        </div>
-        <form id="chat-form" class="composer">
-          <label class="sr-only" for="question">Ask Doctor Agent</label>
-          <textarea id="question" rows="1" maxlength="2000" placeholder="Ask a health or wellness question…" required></textarea>
-          <button id="send" class="send-button" type="submit" aria-label="Send message">↑</button>
-        </form>
-        <div class="composer-footer"><span>Enter to send · Shift + Enter for a new line</span><span id="engine-label">Checking local setup…</span></div>
-      </section>
-
-      <nav class="suggestions" aria-label="Suggested questions">
-        <button type="button" data-prompt="Explain lab reports.">📋 <span>Lab reports</span></button>
-        <button type="button" data-prompt="Tell me about mental health.">💬 <span>Mental health</span></button>
-        <button type="button" data-prompt="Tell me about medicine safety.">✚ <span>Medicines</span></button>
-      </nav>
-
-      <footer class="disclaimer"><span class="disclaimer-icon" aria-hidden="true">ⓘ</span><p>Early prototype for general education. Not clinically validated. It does not diagnose or prescribe. If you may be in immediate danger, contact local emergency services or a qualified professional. Avoid entering personal health information.</p></footer>
-    </main>
-    <script src="/app.js" defer></script>
-  </body>
+      <section id="messages" class="messages" aria-label="Conversation" aria-live="polite" aria-relevant="additions text"></section>
+    </div>
+    <div class="composer-dock"><form id="chat-form" class="composer"><label class="sr-only" for="question">Ask Doctor Agent</label><textarea id="question" rows="1" maxlength="2000" placeholder="Ask a health question…" required></textarea><div class="composer-actions"><span class="composer-tag">✦ Health companion</span><button id="stop" class="stop-button" type="button" hidden>■ Stop response</button><button id="send" class="send-button" type="submit" aria-label="Send message">↑</button></div></form><p class="composer-footer"><span id="engine-label">Connecting to your local app…</span><span>General information · Not a diagnosis</span></p><p class="scope-note">Early prototype. AI drafts can be wrong. Report upload and personal result interpretation are not available. For emergencies, seek local help. Avoid entering personal health information.</p></div>
+  </main>
+  <script src="/app.js" defer></script>
+</body>
 </html>

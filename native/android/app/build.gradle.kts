@@ -44,8 +44,8 @@ android {
         applicationId = "org.doctoragent.mobile"
         minSdk = 26
         targetSdk = 35
-        versionCode = 15
-        versionName = "0.8.8"
+        versionCode = 16
+        versionName = "0.8.9"
     }
 
     compileOptions {

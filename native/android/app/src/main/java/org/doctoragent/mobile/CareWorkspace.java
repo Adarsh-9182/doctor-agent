@@ -23,10 +23,10 @@ final class CareWorkspace {
         ArrayList<EditText> inputs = new ArrayList<>();
         for (int i = 0; i < VisitNotes.LABELS.length; i++) {
             label(activity, content, VisitNotes.LABELS[i], 14);
-            EditText input = new EditText(activity); input.setTextColor(Color.rgb(24, 59, 53));
+            EditText input = new EditText(activity); input.setTextColor(Color.rgb(37, 35, 55));
             android.graphics.drawable.GradientDrawable surface = new android.graphics.drawable.GradientDrawable();
             surface.setColor(Color.WHITE); surface.setCornerRadius(dp(activity, 14));
-            surface.setStroke(dp(activity, 1), Color.rgb(216, 226, 220)); input.setBackground(surface);
+            surface.setStroke(dp(activity, 1), Color.rgb(233, 229, 241)); input.setBackground(surface);
             input.setPadding(dp(activity, 14), dp(activity, 12), dp(activity, 14), dp(activity, 12));
             input.setTextSize(14); input.setMinLines(2); input.setMaxLines(5); input.setSaveEnabled(false);
             input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
@@ -76,6 +76,6 @@ final class CareWorkspace {
 
     private static void label(Activity activity, LinearLayout parent, String value, int size) {
         TextView text = new TextView(activity); text.setText(value); text.setTextSize(size);
-        text.setTextColor(Color.rgb(24, 59, 53)); text.setPadding(0, dp(activity, 16), 0, dp(activity, 8)); parent.addView(text);
+        text.setTextColor(Color.rgb(37, 35, 55)); text.setPadding(0, dp(activity, 16), 0, dp(activity, 8)); parent.addView(text);
     }
 }

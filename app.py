@@ -133,8 +133,8 @@ def education_reply(question: str, history: list[dict] | None = None) -> dict:
         return {
             "text": (
                 "I don't have a suitable source for that topic in my small library "
-                "yet. Try a general question about nutrition, sleep, hydration, "
-                "food safety, or physical activity, or ask a qualified healthcare "
+                "yet. Try a general question about medicines, lab reports, "
+                "mental health or conditions, or ask a qualified healthcare "
                 "professional."
             ),
             "sources": [],

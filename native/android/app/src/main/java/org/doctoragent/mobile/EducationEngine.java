@@ -47,9 +47,9 @@ public final class EducationEngine {
         EvidenceRetriever.Result result = EvidenceRetriever.search(question, catalog);
         if (result.matches.isEmpty()) {
             if (result.needsClarification) return new Answer(
-                    "Which topic do you mean: sleep, nutrition, hydration, food safety, or movement? The words in your question don't identify a supported topic clearly enough. I can't assess symptoms from this library.",
+                    "Which topic do you mean: medicines, lab reports, mental health, conditions, or doctor visits? The words in your question don't identify a supported topic clearly enough. I can't assess symptoms from this library.",
                     "clarification", Collections.emptyList());
-            return new Answer("I don’t have a suitable source for that topic in my small library yet. Try a general question about nutrition, sleep, hydration, food safety, or physical activity, or ask a qualified healthcare professional.", "not-covered", Collections.emptyList());
+            return new Answer("I don’t have a suitable source for that topic in my small library yet. Try a general question about medicines, lab reports, mental health, conditions, or doctor visits, or ask a qualified healthcare professional.", "not-covered", Collections.emptyList());
         }
         StringBuilder text = new StringBuilder("Here are the bundled summaries for the topics I matched. These summaries may not answer every detail of your question:\n\n");
         List<String> ids = new ArrayList<>();

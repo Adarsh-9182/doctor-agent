@@ -167,5 +167,173 @@
       "physical fitness",
       "active lifestyle"
     ]
+  },
+  {
+    "id": "medlineplus-doctor-visit",
+    "title": "Talking with your doctor",
+    "source": "MedlinePlus: Talking with your doctor",
+    "url": "https://medlineplus.gov/talkingwithyourdoctor.html",
+    "keywords": [
+      "doctor appointment",
+      "appointment",
+      "doctor visit",
+      "prepare for a visit",
+      "organize symptoms",
+      "symptom notes",
+      "questions for my doctor"
+    ],
+    "text": "Before a visit, write down your concerns, when symptoms began, and what changes them. Bring a list of medicines, supplements and allergies. Ask questions and take notes about the next steps. This preparation does not determine urgency or diagnose symptoms.",
+    "retrieval_terms": [
+      "doctor appointment",
+      "appointment",
+      "doctor visit",
+      "prepare for a visit",
+      "organize symptoms",
+      "symptom notes",
+      "questions for my doctor"
+    ]
+  },
+  {
+    "id": "medlineplus-lab-results",
+    "title": "Understanding lab results",
+    "source": "MedlinePlus: Understanding lab results",
+    "url": "https://medlineplus.gov/lab-tests/how-to-understand-your-lab-results/",
+    "keywords": [
+      "lab report",
+      "lab reports",
+      "lab results",
+      "laboratory tests",
+      "lab tests",
+      "blood tests",
+      "reference range",
+      "reference ranges",
+      "test report"
+    ],
+    "text": "Lab results are one part of a health assessment. Laboratories may use different units and reference ranges. A result outside the range does not by itself establish disease; a result within it does not guarantee health. A clinician interprets results alongside symptoms and history.",
+    "retrieval_terms": [
+      "lab report",
+      "lab reports",
+      "lab results",
+      "laboratory tests",
+      "lab tests",
+      "blood tests",
+      "reference range",
+      "reference ranges",
+      "test report"
+    ]
+  },
+  {
+    "id": "medlineplus-medicines",
+    "title": "Medicines",
+    "source": "MedlinePlus: Medicines",
+    "url": "https://medlineplus.gov/medicines.html",
+    "keywords": [
+      "medicines",
+      "medications",
+      "medicine information",
+      "medicine safety",
+      "medication safety",
+      "medicine questions"
+    ],
+    "text": "Medicines can help treat illness but can also cause side effects and interactions with other medicines, foods or alcohol. Discuss your medicine list and questions with a clinician or pharmacist. This summary does not choose a medicine, check a specific interaction, or advise starting, stopping or changing a dose.",
+    "retrieval_terms": [
+      "medicines",
+      "medications",
+      "medicine information",
+      "medicine safety",
+      "medication safety",
+      "medicine questions"
+    ]
+  },
+  {
+    "id": "medlineplus-mental-health",
+    "title": "Mental health",
+    "source": "MedlinePlus: Mental health",
+    "url": "https://medlineplus.gov/mentalhealth.html",
+    "keywords": [
+      "mental health",
+      "mental wellbeing",
+      "emotional wellbeing"
+    ],
+    "text": "Mental health includes emotional, psychological and social wellbeing. It affects coping, relationships and everyday functioning, and can change with life circumstances. Persistent concerns or difficulties with daily life deserve professional support. This introduction is not a mental health assessment or therapy.",
+    "retrieval_terms": [
+      "mental health",
+      "mental wellbeing",
+      "emotional wellbeing"
+    ]
+  },
+  {
+    "id": "medlineplus-diabetes",
+    "title": "Diabetes",
+    "source": "MedlinePlus: Diabetes",
+    "url": "https://medlineplus.gov/diabetes.html",
+    "keywords": [
+      "diabetes",
+      "diabetic",
+      "type 1 diabetes",
+      "type 2 diabetes"
+    ],
+    "text": "Diabetes involves blood glucose that is too high and problems with insulin production or use. There are different types. Diagnosis uses clinical assessment and blood tests; care is individualized. This introduction does not diagnose diabetes or interpret your glucose readings.",
+    "retrieval_terms": [
+      "diabetes",
+      "diabetic",
+      "type 1 diabetes",
+      "type 2 diabetes"
+    ]
+  },
+  {
+    "id": "medlineplus-blood-pressure",
+    "title": "High blood pressure",
+    "source": "MedlinePlus: High blood pressure",
+    "url": "https://medlineplus.gov/highbloodpressure.html",
+    "keywords": [
+      "blood pressure",
+      "hypertension",
+      "high blood pressure"
+    ],
+    "text": "Blood pressure describes blood pushing against artery walls and is recorded as systolic and diastolic values. High blood pressure often has no symptoms. A clinician evaluates measurements and your circumstances. This introduction does not classify your readings or recommend treatment.",
+    "retrieval_terms": [
+      "blood pressure",
+      "hypertension",
+      "high blood pressure"
+    ]
+  },
+  {
+    "id": "medlineplus-vaccines",
+    "title": "Vaccines",
+    "source": "MedlinePlus: Vaccines",
+    "url": "https://medlineplus.gov/vaccines.html",
+    "keywords": [
+      "vaccines",
+      "vaccination",
+      "immunization",
+      "immunisation",
+      "vaccine"
+    ],
+    "text": "Vaccines train the immune system to recognize and defend against particular germs. Vaccination can help protect people and communities. This introduction explains the general concept; ask a qualified professional for current recommendations suitable for your age, location and health circumstances.",
+    "retrieval_terms": [
+      "vaccines",
+      "vaccination",
+      "immunization",
+      "immunisation",
+      "vaccine"
+    ]
+  },
+  {
+    "id": "medlineplus-pain",
+    "title": "Pain",
+    "source": "MedlinePlus: Pain",
+    "url": "https://medlineplus.gov/pain.html",
+    "keywords": [
+      "pain",
+      "acute pain",
+      "chronic pain"
+    ],
+    "text": "Pain is an unpleasant nervous-system signal and can vary in location, intensity and duration. Describe where it is, when it began, what changes it and how it affects daily life to your clinician. This general introduction cannot identify its cause or determine whether waiting is safe.",
+    "retrieval_terms": [
+      "pain",
+      "acute pain",
+      "chronic pain"
+    ]
   }
 ]

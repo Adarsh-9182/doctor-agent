@@ -69,6 +69,7 @@ public final class MainActivity extends Activity {
     private TextView chatStorageStatus;
     private Button saveChatButton;
     private boolean replayingChat;
+    private VisitNotes.Draft visitNotesDraft = new VisitNotes.Draft();
 
     private static final class ChatMessage {
         final String text, mode;
@@ -82,9 +83,10 @@ public final class MainActivity extends Activity {
     private static final class Session {
         final ArrayList<ChatMessage> messages;
         final String draft, page, savedChatId;
-        Session(ArrayList<ChatMessage> messages, String draft, String page, String savedChatId) {
+        final VisitNotes.Draft visitDraft;
+        Session(ArrayList<ChatMessage> messages, String draft, String page, String savedChatId, VisitNotes.Draft visitDraft) {
             this.messages = new ArrayList<>(messages); this.draft = draft; this.page = page;
-            this.savedChatId = savedChatId;
+            this.savedChatId = savedChatId; this.visitDraft = visitDraft.copy();
         }
     }
 
@@ -122,6 +124,7 @@ public final class MainActivity extends Activity {
         Session retained = (Session) getLastNonConfigurationInstance();
         if (retained != null) {
             savedChatId = retained.savedChatId;
+            visitNotesDraft = retained.visitDraft;
             replayingChat = true;
             for (ChatMessage message : retained.messages) addBubble(message.text, message.assistant, message.refs, message.mode);
             replayingChat = false;
@@ -132,7 +135,7 @@ public final class MainActivity extends Activity {
             openReminderJournal(getIntent());
             return;
         }
-        addAssistant(catalog.isEmpty() ? "The bundled source library could not load. Reinstall a complete app build before using chat." : "Hi, I’m Doctor Agent. I can help explore general topics like nutrition, sleep, hydration, food safety, and movement. What would you like to understand?", new JSONArray(), "welcome");
+        addAssistant(catalog.isEmpty() ? "The bundled source library could not load. Reinstall a complete app build before using chat." : "Hi, I’m Doctor Agent, your health companion. I can explain general health topics including medicines, lab reports, mental health and conditions. Open Care to organize symptoms and questions for a clinician. What would you like help understanding?", new JSONArray(), "welcome");
         selectPage("Home");
         openReminderJournal(getIntent());
     }
@@ -157,7 +160,7 @@ public final class MainActivity extends Activity {
         header.addView(mark, new LinearLayout.LayoutParams(dp(48), dp(48)));
         LinearLayout brand = column(); brand.setPadding(dp(12), 0, 0, 0);
         TextView name = text("Doctor Agent", 20, INK); name.setTypeface(null, 1);
-        brand.addView(name); brand.addView(text("A little more cared for, each day", 11, MUTED));
+        brand.addView(name); brand.addView(text("Your private health companion", 11, MUTED));
         header.addView(brand, new LinearLayout.LayoutParams(0, -2, 1));
         root.addView(header);
         TextView status = text("●  Offline · No account needed", 11, GREEN);
@@ -167,9 +170,9 @@ public final class MainActivity extends Activity {
         buildChat();
         LinearLayout navigation = new LinearLayout(this);
         navigation.setPadding(0, dp(8), 0, 0);
-        for (String nameTab : new String[]{"Home", "Chat", "Library", "You"}) {
+        for (String nameTab : new String[]{"Home", "Chat", "Care", "Library", "You"}) {
             Button tab = button(nameTab, false);
-            tab.setTextSize(11);
+            tab.setTextSize(11); tab.setMinWidth(0); tab.setMinimumWidth(0); tab.setPadding(0, dp(8), 0, dp(8));
             tab.setOnClickListener(view -> selectPage(nameTab));
             navigation.addView(tab, new LinearLayout.LayoutParams(0, -2, 1));
             tabs.add(tab);
@@ -198,9 +201,9 @@ public final class MainActivity extends Activity {
         android.widget.HorizontalScrollView topicScroll = new android.widget.HorizontalScrollView(this);
         topicScroll.setHorizontalScrollBarEnabled(false);
         LinearLayout topicRow = new LinearLayout(this);
-        String[][] starters = {{"Sleep", "Tell me about sleep."}, {"Nutrition", "Tell me about nutrition."},
-                {"Hydration", "Tell me about hydration."}, {"Food safety", "Tell me about food safety."},
-                {"Movement", "Tell me about physical activity."}};
+        String[][] starters = {{"Symptoms", "Help me organize symptoms for my doctor."},
+                {"Reports", "Explain lab reports."}, {"Medicines", "Tell me about medicine safety."},
+                {"Mental health", "Tell me about mental health."}, {"Conditions", "Tell me about diabetes and blood pressure."}};
         for (String[] starter : starters) {
             Button chip = button(starter[0], false);
             chip.setTextSize(11); chip.setMinHeight(dp(38)); chip.setMinimumHeight(dp(38));
@@ -282,6 +285,7 @@ public final class MainActivity extends Activity {
             ScrollView pageScroll = new ScrollView(this); pageScroll.setFillViewport(true);
             LinearLayout content = column(); content.setPadding(0, dp(4), 0, dp(16));
             if (page.equals("Home")) buildHome(content);
+            else if (page.equals("Care")) buildCare(content);
             else if (page.equals("Library")) buildLibrary(content);
             else buildPrivacy(content);
             pageScroll.addView(content); pages.addView(pageScroll); animatePage(pageScroll);
@@ -307,16 +311,35 @@ public final class MainActivity extends Activity {
         });
     }
 
+    private void buildCare(LinearLayout content) {
+        CareWorkspace.build(this, content, visitNotesDraft, notes -> {
+            ai.invalidateDraft();
+            selectPage("Chat");
+            addUser(notes);
+            JSONArray refs = new JSONArray();
+            for (JSONObject source : catalog) if (source.optString("id").equals("medlineplus-doctor-visit")) refs.put(source);
+            addAssistant(VisitNotes.questions(), refs, "visit-summary");
+        });
+    }
+
     private void buildHome(LinearLayout content) {
         String greeting = java.time.LocalTime.now().getHour() < 12 ? "Good morning" : java.time.LocalTime.now().getHour() < 18 ? "Good afternoon" : "Good evening";
         JSONObject profile = new JSONObject();
         try { profile = CompanionProfile.read(this); } catch (Exception ignored) {}
         String preferredName = profile.optString("name");
         content.addView(text(java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMM", java.util.Locale.getDefault())), 12, MUTED));
-        TextView welcome = text(greeting + (preferredName.isEmpty() ? "." : ", " + preferredName + ".") + "\nA little space for your wellbeing.", 27, INK);
+        TextView welcome = text(greeting + (preferredName.isEmpty() ? "." : ", " + preferredName + ".") + "\nYour health, in one place.", 27, INK);
         welcome.setTypeface(null, 1); welcome.setPadding(0, dp(8), 0, dp(18)); content.addView(welcome);
         LinearLayout hero = card(content, Color.rgb(224, 240, 229));
-        hero.addView(text("YOUR DAILY MOMENT", 10, GREEN));
+        hero.addView(text("YOUR HEALTH COMPANION", 10, GREEN));
+        TextView careHeadline = text("What can I help you with today?", 21, INK); careHeadline.setTypeface(null, 1); hero.addView(careHeadline);
+        hero.addView(text("Explore health questions, understand medical terms and prepare for a conversation with your clinician.", 14, INK));
+        Button askHealth = button("Ask a health question", true);
+        askHealth.setOnClickListener(view -> { selectPage("Chat"); question.requestFocus(); }); hero.addView(askHealth);
+        Button prepareVisit = button("Prepare symptom & visit notes", false);
+        prepareVisit.setOnClickListener(view -> selectPage("Care")); hero.addView(prepareVisit);
+        hero = card(content, Color.WHITE);
+        hero.addView(text("YOUR DAILY CHECK-IN", 10, GREEN));
         TextView headline = text("How are you feeling today?", 21, INK); headline.setTypeface(null, 1); hero.addView(headline);
         hero.addView(text("Notice your sleep, energy and one small intention. Save only if you choose.", 14, INK));
         hero.addView(text(todayStatus(), 12, MUTED));
@@ -340,8 +363,11 @@ public final class MainActivity extends Activity {
         android.widget.HorizontalScrollView startersScroll = new android.widget.HorizontalScrollView(this);
         startersScroll.setHorizontalScrollBarEnabled(false);
         LinearLayout starterRow = new LinearLayout(this);
-        String[][] prompts = {{"01  ·  Nutrition", "Tell me about healthy eating"}, {"02  ·  Rest", "Tell me about sleep"},
-                {"03  ·  Hydration", "Tell me about water in diet"}, {"04  ·  Movement", "Tell me about physical activity"}};
+        String[][] prompts = {{"01  ·  Symptoms", "Help me organize symptoms for my doctor."},
+                {"02  ·  Lab reports", "Explain what lab reports can and cannot tell me."},
+                {"03  ·  Medicines", "Tell me about medicine safety."},
+                {"04  ·  Mental health", "Tell me about mental health."},
+                {"05  ·  Conditions", "Tell me about diabetes and blood pressure."}};
         for (String[] topic : prompts) {
             Button prompt = button(topic[0] + "\nExplore this topic  →", false);
             prompt.setGravity(Gravity.START | Gravity.CENTER_VERTICAL); prompt.setTextSize(12);
@@ -355,7 +381,7 @@ public final class MainActivity extends Activity {
         LinearLayout.LayoutParams starterParams = new LinearLayout.LayoutParams(-1, dp(82));
         starterParams.topMargin = dp(6); content.addView(startersScroll, starterParams);
         LinearLayout note = card(content, Color.WHITE);
-        note.addView(text("A companion for learning", 16, INK));
+        note.addView(text("Your health companion", 16, INK));
         note.addView(text("Source answers work offline. Import a compatible model in You to optionally add local AI drafts. This app cannot assess symptoms, diagnose, prescribe or replace a clinician.", 13, MUTED));
     }
 
@@ -462,7 +488,7 @@ public final class MainActivity extends Activity {
                 }).show()); model.addView(remove);
         LinearLayout storage = card(content, Color.WHITE);
         storage.addView(text("Private by default", 20, INK));
-        storage.addView(text("No account, ads or analytics. Chats stay in this session unless you explicitly save a snapshot. Saved chats, preferences and optional check-ins are encrypted on this phone and excluded from backup. Saved chats are opened only when you choose one in History. Journal entries remain separate from chat.", 14, MUTED));
+        storage.addView(text("No account, ads or analytics. Chats stay in this session unless you explicitly save a snapshot. Saved chats, preferences and optional check-ins are encrypted on this phone and excluded from backup. Saved chats are opened only when you choose one in History. Journal entries remain separate from chat. Care forms stay in this session; reviewed notes enter Chat only when you choose Add to chat.", 14, MUTED));
         Button history = button("Manage saved chats", false); history.setOnClickListener(view -> showChatHistory()); storage.addView(history);
         Button journal = button("Manage journal & saved entries", true);
         journal.setOnClickListener(view -> CheckInDialog.show(this)); storage.addView(journal);
@@ -825,7 +851,7 @@ public final class MainActivity extends Activity {
         }
         if (ConversationContext.needsTopic(prompt) || LocalLanguage.needsTopic(prompt)) {
             try {
-                result.put("text", "What would you like to focus on: sleep, nutrition, hydration, food safety, or movement? I can explain the information in my library and help you prepare questions for a healthcare professional. I can't assess symptoms or create a personal treatment plan.")
+                result.put("text", "What would you like to focus on: medicines, lab reports, mental health, conditions, or preparing for a doctor visit? I can explain the information in my library and help you prepare questions for a healthcare professional. I can't assess symptoms or create a personal treatment plan.")
                         .put("mode", "clarification").put("sources", new JSONArray());
             } catch (org.json.JSONException ignored) {}
             if (hindi) localizeReply(result, prompt);
@@ -880,12 +906,12 @@ public final class MainActivity extends Activity {
                         ? "कोई बात नहीं। जब चाहें किसी सामान्य स्वास्थ्य विषय पर पूछें या अपना दैनिक चेक-इन करें।"
                         : "Koi baat nahi. Jab chahein kisi aam health topic par baat karein ya apna daily check-in karein.");
                 else reply.put("text", devanagari
-                        ? "नमस्ते! मैं पोषण, नींद, पानी, खाने की सुरक्षा और शारीरिक गतिविधि की सामान्य जानकारी खोजने में मदद कर सकता हूँ। आप किस बारे में पूछना चाहेंगे?"
-                        : "Namaste! Main poshan, neend, paani, khaane ki suraksha aur sharirik gatividhi par aam jankari dhoondhne mein madad kar sakta hoon. Aap kis baare mein poochhna chahenge?");
+                        ? "नमस्ते! मैं दवाओं, लैब रिपोर्ट, मानसिक स्वास्थ्य, बीमारियों और डॉक्टर से मिलने की तैयारी की सामान्य जानकारी खोजने में मदद कर सकता हूँ। आप किस बारे में पूछना चाहेंगे?"
+                        : "Namaste! Main dawaiyon, lab reports, mental health, conditions aur doctor visit ki taiyari par aam jankari dhoondhne mein madad kar sakta hoon. Aap kis baare mein poochhna chahenge?");
             } else if ("not-covered".equals(mode)) {
                 reply.put("text", devanagari
-                        ? "इस विषय पर मेरी छोटी स्रोत-पुस्तक में उपयुक्त जानकारी नहीं मिली। आप नींद, पोषण, पानी, खाने की सुरक्षा या शारीरिक गतिविधि के बारे में पूछ सकते हैं; या किसी योग्य स्वास्थ्य पेशेवर से बात करें।"
-                        : "Is topic ke liye meri chhoti source library mein munasib jankari nahi mili. Aap neend, poshan, paani, khaane ki suraksha ya sharirik gatividhi ke baare mein poochh sakte hain; ya kisi qualified healthcare professional se baat karein.");
+                        ? "इस विषय पर मेरी छोटी स्रोत-पुस्तक में उपयुक्त जानकारी नहीं मिली। आप दवाओं, लैब रिपोर्ट, मानसिक स्वास्थ्य या डॉक्टर से मिलने की तैयारी के बारे में पूछ सकते हैं; या किसी योग्य स्वास्थ्य पेशेवर से बात करें।"
+                        : "Is topic ke liye meri chhoti source library mein munasib jankari nahi mili. Aap medicines, lab reports, mental health ya doctor visit ki taiyari ke baare mein poochh sakte hain; ya kisi qualified healthcare professional se baat karein.");
             }
         } catch (org.json.JSONException ignored) {}
     }
@@ -927,8 +953,12 @@ public final class MainActivity extends Activity {
         speaker.setTypeface(null, 1); speaker.setLetterSpacing(.06f); speaker.setPadding(0, 0, 0, dp(6)); group.addView(speaker);
         TextView body = new TextView(this); body.setText(text); body.setTextColor(INK); body.setTextSize(15); body.setLineSpacing(dp(3), 1); body.setTextIsSelectable(true); group.addView(body);
         if (assistant) {
-            TextView meta = new TextView(this); meta.setText(mode.equals("local-ai-draft") ? "LOCAL AI DRAFT · NOT VERIFIED" : mode.equals("urgent-care") ? "URGENT · SEEK IN-PERSON HELP" : mode.equals("professional-care") ? "PLEASE ASK A HEALTHCARE PROFESSIONAL" : mode.equals("not-covered") ? "OUTSIDE THIS LIBRARY" : mode.equals("welcome") ? "YOUR COMPANION · GENERAL EDUCATION" : "SOURCE SUMMARY · GENERAL INFORMATION"); meta.setTextColor(MUTED); meta.setTextSize(9); meta.setPadding(0, dp(8), 0, 0); group.addView(meta);
+            TextView meta = new TextView(this); meta.setText(mode.equals("visit-summary") ? "YOUR NOTES · NOT A CLINICAL ASSESSMENT" : mode.equals("local-ai-draft") ? "LOCAL AI DRAFT · NOT VERIFIED" : mode.equals("urgent-care") ? "URGENT · SEEK IN-PERSON HELP" : mode.equals("professional-care") ? "PLEASE ASK A HEALTHCARE PROFESSIONAL" : mode.equals("not-covered") ? "OUTSIDE THIS LIBRARY" : mode.equals("welcome") ? "YOUR COMPANION · GENERAL EDUCATION" : "SOURCE SUMMARY · GENERAL INFORMATION"); meta.setTextColor(MUTED); meta.setTextSize(9); meta.setPadding(0, dp(8), 0, 0); group.addView(meta);
             if (mode.equals("clarification")) meta.setText("LET'S CHOOSE A TOPIC");
+            if (!mode.equals("urgent-care") && !mode.equals("local-ai-draft") && !mode.equals("visit-summary")) {
+                Button care = button("Prepare visit notes", false);
+                care.setOnClickListener(view -> selectPage("Care")); group.addView(care);
+            }
             if (mode.equals("clarification") || mode.equals("not-covered") || mode.equals("welcome")) {
                 boolean lastDevanagari = lastUserUsedDevanagari();
                 group.addView(text(lastDevanagari ? "विषय चुनें। संदेश भेजने से पहले मसौदा पढ़ लें।"
@@ -937,16 +967,16 @@ public final class MainActivity extends Activity {
                 android.widget.HorizontalScrollView topics = new android.widget.HorizontalScrollView(this);
                 LinearLayout row = new LinearLayout(this);
                 String[][] suggestedTopics = lastDevanagari
-                        ? new String[][]{{"नींद", "नींद के बारे में बताइए।"}, {"पोषण", "पोषण के बारे में बताइए।"},
-                        {"पानी", "पानी के बारे में बताइए।"}, {"खाने की सुरक्षा", "खाना सुरक्षित कैसे रखें?"},
-                        {"व्यायाम", "व्यायाम के बारे में बताइए।"}}
+                        ? new String[][]{{"रिपोर्ट", "जाँच रिपोर्ट के बारे में बताइए।"}, {"दवाएँ", "दवाओं के बारे में बताइए।"},
+                        {"मानसिक स्वास्थ्य", "मानसिक स्वास्थ्य के बारे में बताइए।"}, {"मधुमेह", "मधुमेह के बारे में बताइए।"},
+                        {"रक्तचाप", "रक्तचाप के बारे में बताइए।"}}
                         : lastUserUsedHindi()
-                        ? new String[][]{{"Neend", "Neend ke baare mein batao."}, {"Poshan", "Poshan ke baare mein batao."},
-                        {"Paani", "Paani ke baare mein batao."}, {"Khaane ki suraksha", "Khaane ko surakshit kaise rakhein?"},
-                        {"Vyayam", "Vyayam ke baare mein batao."}}
-                        : new String[][]{{"Sleep", "Tell me about sleep."}, {"Nutrition", "Tell me about nutrition."},
-                        {"Hydration", "Tell me about hydration."}, {"Food safety", "Tell me about food safety."},
-                        {"Movement", "Tell me about physical activity."}};
+                        ? new String[][]{{"Reports", "Lab reports ke baare mein batao."}, {"Medicines", "Medicines ke baare mein batao."},
+                        {"Mental health", "Mental health ke baare mein batao."}, {"Diabetes", "Diabetes ke baare mein batao."},
+                        {"Doctor visit", "Doctor appointment ke liye taiyari samjhao."}}
+                        : new String[][]{{"Reports", "Explain lab reports."}, {"Medicines", "Tell me about medicine safety."},
+                        {"Mental health", "Tell me about mental health."}, {"Conditions", "Tell me about diabetes and blood pressure."},
+                        {"Doctor visit", "Help me organize symptoms for my doctor."}};
                 for (String[] topic : suggestedTopics) {
                     Button choice = button(topic[0], false);
                     choice.setOnClickListener(view -> offerTopic(topic[1])); row.addView(choice);
@@ -1051,7 +1081,7 @@ public final class MainActivity extends Activity {
     }
 
     @Override public Object onRetainNonConfigurationInstance() {
-        return new Session(messages, question.getText().toString(), selectedPage, savedChatId);
+        return new Session(messages, question.getText().toString(), selectedPage, savedChatId, visitNotesDraft);
     }
 
     @Override protected void onStop() {

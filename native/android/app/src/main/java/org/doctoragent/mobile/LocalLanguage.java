@@ -69,8 +69,8 @@ final class LocalLanguage {
 
     static String askForTopicMessage(String text) {
         return isDevanagari(text)
-                ? "आप किस विषय पर बात करना चाहते हैं: नींद, पोषण, पानी, खाने की सुरक्षा, या शारीरिक गतिविधि? इनमें से कोई एक चुनें।"
-                : "Aap kis topic par baat karna chahte hain: neend, poshan, paani, khaane ki suraksha, ya sharirik gatividhi? Inmein se koi ek chun sakte hain.";
+                ? "आप किस विषय पर बात करना चाहते हैं: दवाओं, लैब रिपोर्ट, मानसिक स्वास्थ्य या डॉक्टर से मिलने की तैयारी? इनमें से कोई एक चुनें।"
+                : "Aap kis topic par baat karna chahte hain: medicines, lab reports, mental health ya doctor visit ki taiyari? Inmein se koi ek chun sakte hain.";
     }
 
     static boolean hasUrgentSignal(String text) {
@@ -126,6 +126,11 @@ final class LocalLanguage {
                 .replace("sharirik gatividhi", " physical activity ")
                 .replace("food safety", " food safety ");
         String[][] aliases = {
+                {"मानसिक स्वास्थ्य", "mental health"}, {"mansik swasthya", "mental health"},
+                {"मधुमेह", "diabetes"}, {"रक्तचाप", "blood pressure"},
+                {"दवाओं", "medicines"}, {"दवाइयों", "medicines"}, {"dawai", "medicines"},
+                {"जांच रिपोर्ट", "lab reports"}, {"जाँच रिपोर्ट", "lab reports"},
+                {"टीके", "vaccines"}, {"टीका", "vaccines"}, {"दर्द", "pain"}, {"dard", "pain"},
                 {"नींद", "sleep"}, {"सोना", "sleep"}, {"neend", "sleep"}, {"nind", "sleep"}, {"sone", "sleep"},
                 {"पोषण", "nutrition"}, {"खानपान", "nutrition"}, {"sehatmand khana", "healthy eating"},
                 {"healthy khana", "healthy eating"}, {"poshan", "nutrition"}, {"khanapan", "nutrition"},

@@ -97,5 +97,69 @@
     "text": "Sharirik gatividhi aam sehat mein madad kar sakti hai. Kaunsi activity munasib hai, yeh sehat, kshamata aur paristhitiyon ke hisaab se badalta hai. Kisi medical condition ke liye sahi activity par healthcare professional se baat karein.",
     "title_deva": "शारीरिक गतिविधि और फिटनेस",
     "text_deva": "शारीरिक गतिविधि सामान्य स्वास्थ्य में मदद कर सकती है। कौन-सी गतिविधि उचित है, यह स्वास्थ्य, क्षमता और परिस्थितियों के अनुसार बदलता है। किसी चिकित्सीय स्थिति के लिए उपयुक्त गतिविधि पर स्वास्थ्य पेशेवर से बात करें।"
+  },
+  {
+    "id": "medlineplus-doctor-visit",
+    "title": "Doctor se baat karna",
+    "title_deva": "डॉक्टर से बात करना",
+    "keywords": [],
+    "text": "Visit se pehle apne concerns, symptoms kab shuru hue aur kya unhe badalta hai likhein. Medicines, supplements aur allergies ki list rakhein. Questions poochhein aur agle steps likhein. Yeh urgency ya diagnosis tay nahi karta.",
+    "text_deva": "मिलने से पहले अपनी चिंताएँ, लक्षण कब शुरू हुए और क्या उन्हें बदलता है लिखें। दवाओं, सप्लीमेंट और एलर्जी की सूची रखें। सवाल पूछें और आगे के कदम लिखें। यह तात्कालिकता या निदान तय नहीं करता।"
+  },
+  {
+    "id": "medlineplus-lab-results",
+    "title": "Lab reports samajhna",
+    "title_deva": "लैब रिपोर्ट समझना",
+    "keywords": [],
+    "text": "Lab results health assessment ka ek hissa hain. Labs ki units aur reference ranges alag ho sakti hain. Range ke bahar result akela bimari sabit nahi karta; andar result sehat ki guarantee nahi. Clinician symptoms aur history ke saath samajhta hai.",
+    "text_deva": "लैब परिणाम स्वास्थ्य आकलन का एक हिस्सा हैं। इकाइयाँ और संदर्भ सीमाएँ अलग हो सकती हैं। सीमा से बाहर परिणाम अकेले बीमारी साबित नहीं करता; अंदर परिणाम स्वास्थ्य की गारंटी नहीं। चिकित्सक लक्षणों और इतिहास के साथ समझता है।"
+  },
+  {
+    "id": "medlineplus-medicines",
+    "title": "Dawaiyon ki jankari",
+    "title_deva": "दवाओं की जानकारी",
+    "keywords": [],
+    "text": "Medicines madad kar sakti hain lekin side effects aur interactions bhi ho sakte hain. Apni medicine list aur questions clinician ya pharmacist se discuss karein. Yeh summary medicine choose, specific interaction check ya dose badalne ki salah nahi deti.",
+    "text_deva": "दवाएँ मदद कर सकती हैं लेकिन दुष्प्रभाव और अंतःक्रियाएँ भी हो सकती हैं। अपनी दवाओं की सूची और सवाल चिकित्सक या फार्मासिस्ट से साझा करें। यह सारांश दवा चुनने, विशिष्ट अंतःक्रिया जाँचने या खुराक बदलने की सलाह नहीं देता।"
+  },
+  {
+    "id": "medlineplus-mental-health",
+    "title": "Mansik swasthya",
+    "title_deva": "मानसिक स्वास्थ्य",
+    "keywords": [],
+    "text": "Mental health mein emotional, psychological aur social wellbeing aati hai. Yeh coping, relationships aur daily life ko affect karti hai. Lagatar concerns ya daily life mein dikkat par professional support lein. Yeh assessment ya therapy nahi hai.",
+    "text_deva": "मानसिक स्वास्थ्य में भावनात्मक, मनोवैज्ञानिक और सामाजिक सुख शामिल हैं। यह परिस्थितियों से बदल सकता है और संबंधों व दैनिक जीवन को प्रभावित करता है। लगातार चिंताओं या दैनिक कठिनाइयों पर पेशेवर मदद लें। यह आकलन या उपचार नहीं है।"
+  },
+  {
+    "id": "medlineplus-diabetes",
+    "title": "Diabetes ki jankari",
+    "title_deva": "मधुमेह की जानकारी",
+    "keywords": [],
+    "text": "Diabetes mein blood glucose zyada hota hai aur insulin banne ya istemal mein dikkat hoti hai. Iske alag types hain. Diagnosis aur care clinician ke saath hoti hai. Yeh aapki readings interpret ya diagnosis nahi karta.",
+    "text_deva": "मधुमेह में रक्त ग्लूकोज अधिक होता है और इंसुलिन बनने या उपयोग में समस्या होती है। इसके अलग प्रकार हैं। निदान और देखभाल चिकित्सक के साथ होती है। यह आपकी रीडिंग की व्याख्या या निदान नहीं करता।"
+  },
+  {
+    "id": "medlineplus-blood-pressure",
+    "title": "Blood pressure ki jankari",
+    "title_deva": "रक्तचाप की जानकारी",
+    "keywords": [],
+    "text": "Blood pressure arteries par khoon ka pressure hai, systolic aur diastolic values mein likha jata hai. High blood pressure aksar bina symptoms hota hai. Clinician measurements samajhta hai. Yeh readings classify ya treatment recommend nahi karta.",
+    "text_deva": "रक्तचाप धमनियों की दीवारों पर रक्त का दबाव है, जो सिस्टोलिक और डायस्टोलिक मानों में लिखा जाता है। उच्च रक्तचाप में अक्सर लक्षण नहीं होते। चिकित्सक माप का आकलन करता है। यह रीडिंग वर्गीकृत या उपचार सुझाता नहीं है।"
+  },
+  {
+    "id": "medlineplus-vaccines",
+    "title": "Vaccines ki jankari",
+    "title_deva": "टीकों की जानकारी",
+    "keywords": [],
+    "text": "Vaccines immune system ko khaas germs pehchanne aur unse bachav ke liye train karti hain. Yeh logon aur community ki protection mein madad karti hain. Apni age, jagah aur health ke liye current recommendations professional se poochhein.",
+    "text_deva": "टीके प्रतिरक्षा प्रणाली को विशेष रोगाणुओं की पहचान और बचाव सिखाते हैं। वे लोगों और समुदाय की सुरक्षा में मदद करते हैं। अपनी उम्र, स्थान और स्वास्थ्य के अनुसार वर्तमान सुझाव स्वास्थ्य पेशेवर से पूछें।"
+  },
+  {
+    "id": "medlineplus-pain",
+    "title": "Dard ki jankari",
+    "title_deva": "दर्द की जानकारी",
+    "keywords": [],
+    "text": "Dard nervous system ka unpleasant signal hai. Jagah, intensity aur duration alag ho sakte hain. Clinician ko batayein kahan hai, kab shuru hua aur daily life par kya asar hai. Yeh cause ya wait karna safe hai ya nahi tay nahi karta.",
+    "text_deva": "दर्द तंत्रिका तंत्र का अप्रिय संकेत है। स्थान, तीव्रता और अवधि अलग हो सकती हैं। चिकित्सक को बताएँ कहाँ है, कब शुरू हुआ और दैनिक जीवन पर क्या असर है। यह कारण या प्रतीक्षा सुरक्षित होने का निर्णय नहीं करता।"
   }
 ]

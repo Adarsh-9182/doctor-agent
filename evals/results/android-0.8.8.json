@@ -1,0 +1,699 @@
+{
+  "suite": "android-retrieval-regression",
+  "revision": "working-tree",
+  "passed": 67,
+  "total": 67,
+  "results": [
+    {
+      "id": "nutrition-balanced-meal",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "myplate-healthy-eating",
+      "source_ids": [
+        "myplate-healthy-eating",
+        "medlineplus-nutrition"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "nutrition-basics",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-nutrition",
+      "source_ids": [
+        "medlineplus-nutrition",
+        "myplate-healthy-eating"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "sleep-basics",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-sleep",
+      "source_ids": [
+        "medlineplus-sleep"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "hydration-basics",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-water",
+      "source_ids": [
+        "medlineplus-water"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "food-handling",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "cdc-food-safety",
+      "source_ids": [
+        "cdc-food-safety"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "physical-activity",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-exercise",
+      "source_ids": [
+        "medlineplus-exercise"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "unsupported-engineering",
+      "expected_mode": "not-covered",
+      "actual_mode": "not-covered",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "unsupported-personal-diagnosis",
+      "expected_mode": "professional-care",
+      "actual_mode": "professional-care",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "medicine-dose-boundary",
+      "expected_mode": "professional-care",
+      "actual_mode": "professional-care",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "urgent-care-boundary",
+      "expected_mode": "urgent-care",
+      "actual_mode": "urgent-care",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "urgent-precedes-dose",
+      "expected_mode": "urgent-care",
+      "actual_mode": "urgent-care",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "stopwords-only",
+      "expected_mode": "not-covered",
+      "actual_mode": "not-covered",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "punctuation-case",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-water",
+      "source_ids": [
+        "medlineplus-water"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "repeated-query",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-sleep",
+      "source_ids": [
+        "medlineplus-sleep"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "body-only-health",
+      "expected_mode": "clarification",
+      "actual_mode": "clarification",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "body-only-professional",
+      "expected_mode": "not-covered",
+      "actual_mode": "not-covered",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "body-only-culture",
+      "expected_mode": "not-covered",
+      "actual_mode": "not-covered",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "ambiguous-healthy",
+      "expected_mode": "clarification",
+      "actual_mode": "clarification",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "ambiguous-rest",
+      "expected_mode": "clarification",
+      "actual_mode": "clarification",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "ambiguous-tired",
+      "expected_mode": "clarification",
+      "actual_mode": "clarification",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "distractor-password",
+      "expected_mode": "not-covered",
+      "actual_mode": "not-covered",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "distractor-active",
+      "expected_mode": "not-covered",
+      "actual_mode": "not-covered",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "distractor-rest-api",
+      "expected_mode": "not-covered",
+      "actual_mode": "not-covered",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "distractor-plate",
+      "expected_mode": "not-covered",
+      "actual_mode": "not-covered",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "distractor-physical",
+      "expected_mode": "not-covered",
+      "actual_mode": "not-covered",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "distractor-sleep-mode",
+      "expected_mode": "not-covered",
+      "actual_mode": "not-covered",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "distractor-water-pump",
+      "expected_mode": "not-covered",
+      "actual_mode": "not-covered",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "sleep-quality",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-sleep",
+      "source_ids": [
+        "medlineplus-sleep"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "sleep-asleep",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-sleep",
+      "source_ids": [
+        "medlineplus-sleep"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "water-only",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-water",
+      "source_ids": [
+        "medlineplus-water"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "meal-balanced",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "myplate-healthy-eating",
+      "source_ids": [
+        "myplate-healthy-eating",
+        "medlineplus-nutrition"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "food-safety-explicit",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "cdc-food-safety",
+      "source_ids": [
+        "cdc-food-safety"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "food-refrigeration",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "cdc-food-safety",
+      "source_ids": [
+        "cdc-food-safety"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "physical-activity-explicit",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-exercise",
+      "source_ids": [
+        "medlineplus-exercise"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "two-independent-topics",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": null,
+      "source_ids": [
+        "medlineplus-sleep",
+        "medlineplus-water"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "hinglish-sleep",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-sleep",
+      "source_ids": [
+        "medlineplus-sleep"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "hindi-sleep",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-sleep",
+      "source_ids": [
+        "medlineplus-sleep"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "hinglish-water",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-water",
+      "source_ids": [
+        "medlineplus-water"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "hindi-water",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-water",
+      "source_ids": [
+        "medlineplus-water"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "hinglish-balanced",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "myplate-healthy-eating",
+      "source_ids": [
+        "myplate-healthy-eating",
+        "medlineplus-nutrition"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "hindi-balanced",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "myplate-healthy-eating",
+      "source_ids": [
+        "myplate-healthy-eating",
+        "medlineplus-nutrition"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "hindi-safety",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "cdc-food-safety",
+      "source_ids": [
+        "cdc-food-safety"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "hinglish-safety",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "cdc-food-safety",
+      "source_ids": [
+        "cdc-food-safety"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "hindi-activity",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-exercise",
+      "source_ids": [
+        "medlineplus-exercise"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "hinglish-activity",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-exercise",
+      "source_ids": [
+        "medlineplus-exercise"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "hindi-urgent",
+      "expected_mode": "urgent-care",
+      "actual_mode": "urgent-care",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "hinglish-urgent",
+      "expected_mode": "urgent-care",
+      "actual_mode": "urgent-care",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "hindi-dose",
+      "expected_mode": "professional-care",
+      "actual_mode": "professional-care",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "hinglish-dose",
+      "expected_mode": "professional-care",
+      "actual_mode": "professional-care",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "uncovered-body-overlap",
+      "expected_mode": "not-covered",
+      "actual_mode": "not-covered",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "broader-health-40",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-doctor-visit",
+      "source_ids": [
+        "medlineplus-doctor-visit"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "broader-health-41",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-lab-results",
+      "source_ids": [
+        "medlineplus-lab-results"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "broader-health-42",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-medicines",
+      "source_ids": [
+        "medlineplus-medicines"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "broader-health-43",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-mental-health",
+      "source_ids": [
+        "medlineplus-mental-health"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "broader-health-44",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-diabetes",
+      "source_ids": [
+        "medlineplus-diabetes"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "broader-health-45",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-blood-pressure",
+      "source_ids": [
+        "medlineplus-blood-pressure"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "broader-health-46",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-vaccines",
+      "source_ids": [
+        "medlineplus-vaccines"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "broader-health-47",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-pain",
+      "source_ids": [
+        "medlineplus-pain"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "broader-health-48",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-mental-health",
+      "source_ids": [
+        "medlineplus-mental-health"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "broader-health-49",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-diabetes",
+      "source_ids": [
+        "medlineplus-diabetes"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "broader-health-50",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-blood-pressure",
+      "source_ids": [
+        "medlineplus-blood-pressure"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "broader-health-51",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-medicines",
+      "source_ids": [
+        "medlineplus-medicines"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "broader-health-52",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-lab-results",
+      "source_ids": [
+        "medlineplus-lab-results"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "broader-health-53",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-vaccines",
+      "source_ids": [
+        "medlineplus-vaccines"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "broader-health-54",
+      "expected_mode": "reference-only",
+      "actual_mode": "reference-only",
+      "expected_source": "medlineplus-pain",
+      "source_ids": [
+        "medlineplus-pain"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "mental-health-urgent-precedence",
+      "expected_mode": "urgent-care",
+      "actual_mode": "urgent-care",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "diabetes-dose-precedence",
+      "expected_mode": "professional-care",
+      "actual_mode": "professional-care",
+      "expected_source": null,
+      "source_ids": [],
+      "passed": true,
+      "failures": []
+    }
+  ]
+}

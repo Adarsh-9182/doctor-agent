@@ -150,7 +150,7 @@ In the standard build, choose **Import a model file** in **You**, select a CPU-c
 
 Import copies a file of up to 3 GB into private no-backup storage using a temporary file and atomic replacement. This limit is a storage guard, not a promise that a 3 GB model will run. The model can be removed separately from the journal. The APK is larger because it now includes native inference libraries. The app has no internet permission; version 0.6.0 adds optional microphone access as described below. File providers and external browsers have their own network behavior.
 
-For questions matched to source summaries, the source answer appears first. If enabled, the CPU runtime attempts a separate AI draft using those summaries and a bounded question. A separate opt-in switch includes up to three recent user questions, capped at 240 characters each. Version 0.8.0 optionally supplies a saved name and habit goal when the user separately authorizes profile sharing. Journal entries and previous model outputs are never supplied. Each generation uses a fresh conversation, a 2048-token context budget, and a 256-token output limit. AI/recent-question switches default off and reset on activity recreation. A small set of explicit follow-up phrases can repeat the immediately preceding source summaries; broader conversational reference resolution remains incomplete.
+For questions matched to source summaries, the source answer appears first. If enabled, the CPU runtime attempts a separate AI draft using those summaries and a bounded question. A separate opt-in switch includes up to three recent source-backed exchanges: each question is capped at 240 characters, with complete source summaries within a 450-character title/body budget. Summaries that do not fit are omitted and marked. Emergency and medication-boundary exchanges are excluded. Version 0.8.0 optionally supplies a saved name and habit goal when the user separately authorizes profile sharing. Journal entries and previous model outputs are never supplied. Each generation uses a fresh conversation, a 2048-token context budget, and a 256-token output limit. AI/recent-context switches default off and reset on activity recreation. Explicit English follow-up phrases reuse the preceding source-backed topic, with the current safety boundary checked first. Missing topics trigger clarification and editable topic suggestions. The model is instructed to acknowledge missing details or examples. Broader conversational reference resolution remains incomplete.
 
 The draft is labelled unverified and shown beside its source context, not as a verified answer. Urgent-care, medication-boundary, and uncovered-topic responses bypass generation. A basic output filter rejects certain medication/diagnostic language, URLs, empty responses, and oversized drafts; it does not prove factual grounding or clinical safety. Inference failures retain the source answer. Stop, a new question, clearing chat, or leaving the foreground invalidates pending drafts and requests cancellation. A 60-second timer also requests cancellation; loading/native code may not stop immediately. Runtime crashes and excessive memory use remain possible with incompatible files.
 
@@ -174,12 +174,14 @@ Reboot, clock/timezone changes, and app updates attempt to reschedule an enabled
 
 The manifest now declares `POST_NOTIFICATIONS` and `RECEIVE_BOOT_COMPLETED` alongside optional microphone access. No internet permission, cloud push, exact-alarm permission, or foreground service has been added. Compilation succeeded; scheduled delivery, reboot behavior, permission handling, and notification navigation have not been tested on a phone. Product testing remains deferred at the user's request.
 
-#### Model-included companion, memory and widget (0.8.1)
+#### Model-included companion, memory and widget (0.8.2)
 
 Two debug APKs are produced locally:
 
-- `dist/Doctor-Agent-android-0.8.1-debug.apk`: standard build, without weights.
-- `dist/Doctor-Agent-android-0.8.1-with-model-debug.apk`: includes the pinned Qwen3 0.6B mixed-INT4 starter. No manual model import is needed. Open **You**, enable local AI drafts, then ask a covered topic such as sleep or nutrition in **Chat**.
+- `dist/Doctor-Agent-android-0.8.2-debug.apk`: standard build, without weights.
+- `dist/Doctor-Agent-android-0.8.2-with-model-debug.apk`: includes the pinned Qwen3 0.6B mixed-INT4 starter. No manual model import is needed. Open **You**, enable local AI drafts, then ask a covered topic such as sleep or nutrition in **Chat**.
+
+Version 0.8.2 adds bounded source-backed conversation context, clarification and editable topic suggestions. See [changes and validation limits](docs/releases/0.8.2-preview.md).
 
 Version 0.8.1 fixes a chat-template mismatch between the pinned starter model and LiteRT-LM 0.18.0. A local draft was generated in the ARM64 API 37 emulator; physical-phone performance and medical correctness remain unverified. See [runtime evidence and limitations](docs/releases/0.8.1-preview.md).
 

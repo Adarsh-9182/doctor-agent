@@ -18,19 +18,24 @@ import javax.crypto.spec.GCMParameterSpec;
 
 /** Opt-in journal, encrypted on disk; never supplied to chat or sent anywhere. */
 final class CheckInStore {
-    private static final String ALIAS = "doctor-agent-checkins-v1";
+    private final String alias;
     private final AtomicFile file;
 
     CheckInStore(Context context) {
-        file = new AtomicFile(new File(context.getNoBackupFilesDir(), "checkins.enc"));
+        this(context, "checkins.enc", "doctor-agent-checkins-v1");
+    }
+
+    CheckInStore(Context context, String filename, String alias) {
+        file = new AtomicFile(new File(context.getNoBackupFilesDir(), filename));
+        this.alias = alias;
     }
 
     private SecretKey key() throws Exception {
         KeyStore keys = KeyStore.getInstance("AndroidKeyStore");
         keys.load(null);
-        if (keys.containsAlias(ALIAS)) return (SecretKey) keys.getKey(ALIAS, null);
+        if (keys.containsAlias(alias)) return (SecretKey) keys.getKey(alias, null);
         KeyGenerator generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
-        generator.init(new KeyGenParameterSpec.Builder(ALIAS,
+        generator.init(new KeyGenParameterSpec.Builder(alias,
                 KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build());
@@ -63,6 +68,10 @@ final class CheckInStore {
         while (entries.size() > 30) entries.pollFirstEntry();
         JSONArray updated = new JSONArray();
         for (JSONObject entry : entries.values()) updated.put(entry);
+        write(updated);
+    }
+
+    void write(JSONArray updated) throws Exception {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         cipher.init(Cipher.ENCRYPT_MODE, key());
         byte[] iv = cipher.getIV();

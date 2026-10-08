@@ -146,11 +146,11 @@ The journal pre-fills today's saved entry and can show all retained entries. Cha
 
 #### Optional local AI drafts (0.5.0)
 
-In **You**, choose **Import a model file**, select a CPU-compatible `.litertlm` file, then enable **Add local AI drafts**. No weights are bundled or downloaded automatically. Review the model's own terms before acquiring or importing it. This runtime supports arm64-v8a and x86_64; device/model compatibility and performance have not been measured on the user's phone. A model must be supplied before actual inference can be exercised.
+In the standard build, choose **Import a model file** in **You**, select a CPU-compatible `.litertlm` file, then enable **Add local AI drafts**. The standard APK contains no weights and never downloads them automatically. Version 0.8.0 also offers a separate APK with a pinned starter model included, described below. Review the model's own terms before acquiring or importing it. This runtime supports arm64-v8a and x86_64; device/model compatibility and performance have not been measured on the user's phone.
 
 Import copies a file of up to 3 GB into private no-backup storage using a temporary file and atomic replacement. This limit is a storage guard, not a promise that a 3 GB model will run. The model can be removed separately from the journal. The APK is larger because it now includes native inference libraries. The app has no internet permission; version 0.6.0 adds optional microphone access as described below. File providers and external browsers have their own network behavior.
 
-For questions matched to source summaries, the source answer appears first. If enabled, the CPU runtime attempts a separate AI draft using only those summaries and a bounded question. A separate opt-in switch includes up to three recent user questions, capped at 240 characters each. Journal entries and previous model outputs are never supplied. Each generation uses a fresh conversation, a 2048-token context budget, and a 256-token output limit. The switches default off and reset on activity recreation. Source retrieval does not resolve conversational references such as “what about that?” yet.
+For questions matched to source summaries, the source answer appears first. If enabled, the CPU runtime attempts a separate AI draft using those summaries and a bounded question. A separate opt-in switch includes up to three recent user questions, capped at 240 characters each. Version 0.8.0 optionally supplies a saved name and habit goal when the user separately authorizes profile sharing. Journal entries and previous model outputs are never supplied. Each generation uses a fresh conversation, a 2048-token context budget, and a 256-token output limit. AI/recent-question switches default off and reset on activity recreation. A small set of explicit follow-up phrases can repeat the immediately preceding source summaries; broader conversational reference resolution remains incomplete.
 
 The draft is labelled unverified and shown beside its source context, not as a verified answer. Urgent-care, medication-boundary, and uncovered-topic responses bypass generation. A basic output filter rejects certain medication/diagnostic language, URLs, empty responses, and oversized drafts; it does not prove factual grounding or clinical safety. Inference failures retain the source answer. Stop, a new question, clearing chat, or leaving the foreground invalidates pending drafts and requests cancellation. A 60-second timer also requests cancellation; loading/native code may not stop immediately. Runtime crashes and excessive memory use remain possible with incompatible files.
 
@@ -173,6 +173,37 @@ The scheduler uses one local inexact alarm, then schedules the next local calend
 Reboot, clock/timezone changes, and app updates attempt to reschedule an enabled reminder; returning to the app attempts to restore its saved due time. A saved due time less than eight hours late may be delivered after reopening; older missed reminders are skipped. Device force-stop, notification settings, battery policies, and system scheduling can prevent or delay delivery. This is an optional journal prompt, not a medication or emergency alarm. See the [Android alarm documentation](https://developer.android.com/develop/background-work/services/alarms).
 
 The manifest now declares `POST_NOTIFICATIONS` and `RECEIVE_BOOT_COMPLETED` alongside optional microphone access. No internet permission, cloud push, exact-alarm permission, or foreground service has been added. Compilation succeeded; scheduled delivery, reboot behavior, permission handling, and notification navigation have not been tested on a phone. Product testing remains deferred at the user's request.
+
+#### Model-included companion, memory and widget (0.8.0)
+
+Two debug APKs are produced locally:
+
+- `dist/Doctor-Agent-android-0.8.0-debug.apk`: standard build, without weights.
+- `dist/Doctor-Agent-android-0.8.0-with-model-debug.apk`: includes the pinned Qwen3 0.6B mixed-INT4 starter. No manual model import is needed. Open **You**, enable local AI drafts, then ask a covered topic such as sleep or nutrition in **Chat**.
+
+The starter weighs 497,516,544 bytes. Its immutable repository revision, SHA-256, source URL, and Apache-2.0 license are recorded in `models/starter-model.json`. The model license is bundled and readable from **You → Open-source licenses**. The [upstream model card](https://huggingface.co/litert-community/Qwen3-0.6B) publishes CPU examples; those benchmarks are not measurements of this app or the user's phone. The starter is a general language model, not a medically validated or health-fine-tuned model.
+
+The included model is copied into private no-backup storage on first AI generation, with a checksum check and atomic replacement. The first copy requires at least 550 MiB free at that point; APK installation and overall model memory need additional space. CPU inference can require several GB of RAM. The bundled weights remain part of the APK even after removing the private copy; install the standard build to omit those weights. Neither build enables AI by default, and neither app has internet permission.
+
+**Companion memory** optionally stores a preferred name and one everyday habit goal using a separate encrypted file/key. Home can display them. A separate checkbox authorizes those fields in local AI drafts; the sharing choice persists with the saved profile. Saving or deleting preferences invalidates pending drafts. Deleting preferences leaves the journal and current chat unchanged. It does not erase text already copied to the clipboard or previously shown in chat.
+
+**Add companion to home screen** asks the launcher to pin a widget; unsupported launchers can use their widget picker instead. Its Chat and Check-in buttons open the app directly. The widget contains no personal values, has no periodic refresh, and performs no background inference or microphone capture. It provides access rather than a continuously running model.
+
+Rebuild the model-included package with Python 3.11+, curl, JDK 21, and the Android SDK:
+
+```sh
+bash scripts/build_android_companion.sh
+```
+
+This downloads the pinned weights to ignored `dist/models/`, checks their size/hash, and packages them. Gradle uses a 3 GB maximum heap for the large asset. The build script cleans generated output before packaging; this avoids retaining deleted model bytes in an incremental APK when switching build modes. Standard builds do not retain the bundled asset.
+
+To install on one USB-connected Android phone with USB debugging enabled and this Mac authorized:
+
+```sh
+bash scripts/install_android.sh
+```
+
+Or pass an explicit APK path. The installer updates the app without clearing data and opens it. No phone was connected during this build. Both packaging and the downloaded file's integrity have been checked; model execution, widget behavior, reminders, voice, and usability on a real phone remain unverified. Product testing is still deferred at the user's request.
 
 The native Android response engine can be evaluated without the SDK using Java 17 and Python:
 

@@ -1,0 +1,14 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:padding="14dp" android:background="@drawable/widget_background">
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Doctor Agent" android:textColor="#FFFFFF" android:textSize="18sp" android:textStyle="bold" />
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="A little space for your wellbeing" android:textColor="#E0F0E5" android:textSize="11sp" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+        <Button android:id="@+id/widget_chat" android:layout_width="0dp" android:layout_height="48dp"
+            android:layout_weight="1" android:text="Chat" android:textAllCaps="false" android:textSize="12sp" />
+        <Button android:id="@+id/widget_checkin" android:layout_width="0dp" android:layout_height="48dp"
+            android:layout_weight="1" android:text="Check-in" android:textAllCaps="false" android:textSize="12sp" />
+    </LinearLayout>
+</LinearLayout>

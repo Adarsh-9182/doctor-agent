@@ -234,19 +234,32 @@ public final class MainActivity extends Activity {
 
     private void buildHome(LinearLayout content) {
         String greeting = java.time.LocalTime.now().getHour() < 12 ? "Good morning" : java.time.LocalTime.now().getHour() < 18 ? "Good afternoon" : "Good evening";
+        JSONObject profile = new JSONObject();
+        try { profile = CompanionProfile.read(this); } catch (Exception ignored) {}
+        String preferredName = profile.optString("name");
         content.addView(text(java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMM", java.util.Locale.getDefault())), 12, MUTED));
-        TextView welcome = text(greeting + ".\nA little space for your wellbeing.", 27, INK);
+        TextView welcome = text(greeting + (preferredName.isEmpty() ? "." : ", " + preferredName + ".") + "\nA little space for your wellbeing.", 27, INK);
         welcome.setTypeface(null, 1); welcome.setPadding(0, dp(8), 0, dp(18)); content.addView(welcome);
         LinearLayout hero = card(content, Color.rgb(224, 240, 229));
         hero.addView(text("YOUR DAILY MOMENT", 10, GREEN));
         TextView headline = text("How are you feeling today?", 21, INK); headline.setTypeface(null, 1); hero.addView(headline);
         hero.addView(text("Notice your sleep, energy and one small intention. Save only if you choose.", 14, INK));
         hero.addView(text(todayStatus(), 12, MUTED));
+        if (!profile.optString("goal").isEmpty()) hero.addView(text("Your intention: " + profile.optString("goal"), 14, INK));
         if (DailyReminder.enabled(this)) hero.addView(text(DailyReminder.allowed(this)
                 ? "Daily reminder around " + DailyReminder.timeLabel(this)
                 : "Reminder saved · Notifications are currently blocked", 12, MUTED));
         Button checkIn = button("Open daily check-in", true);
         checkIn.setOnClickListener(view -> CheckInDialog.show(this, () -> { if (selectedPage.equals("Home")) selectPage("Home"); })); hero.addView(checkIn);
+        LinearLayout setup = card(content, Color.WHITE);
+        setup.addView(text("Make it your companion", 18, INK));
+        setup.addView(text(ai.description(), 13, MUTED));
+        setup.addView(text("Voice: " + (OfflineVoiceInput.available(this) ? "on-device service available" : "typing available; on-device voice unavailable")
+                + " · Reminder: " + (DailyReminder.enabled(this) ? "enabled" : "optional, currently off"), 12, MUTED));
+        Button settings = button("Set up AI, memory & reminders", true);
+        settings.setOnClickListener(view -> selectPage("You")); setup.addView(settings);
+        Button widget = button("Add companion to home screen", false);
+        widget.setOnClickListener(view -> CompanionWidget.requestPin(this)); setup.addView(widget);
         heading(content, "Start a conversation");
         content.addView(text("Explore general information from the bundled source library.", 13, MUTED));
         String[][] prompts = {{"Nutrition", "Tell me about healthy eating"}, {"Rest", "Tell me about sleep"}, {"Hydration", "Tell me about water in diet"}, {"Movement", "Tell me about physical activity"}};
@@ -285,6 +298,16 @@ public final class MainActivity extends Activity {
 
     private void buildPrivacy(LinearLayout content) {
         heading(content, "Your space. Your choice.");
+        LinearLayout memory = card(content, Color.WHITE);
+        memory.addView(text("A companion that remembers", 20, INK));
+        memory.addView(text("Save your preferred name and one habit goal, encrypted on this phone. Sharing those preferences with local AI is a separate opt-in. Your journal remains separate.", 13, MUTED));
+        Button preferences = button("Manage companion memory", true);
+        preferences.setOnClickListener(view -> {
+            ai.invalidateDraft();
+            CompanionProfile.show(this, () -> {
+                if (!isDestroyed()) { ai.invalidateDraft(); if (selectedPage.equals("You")) selectPage("You"); }
+            });
+        }); memory.addView(preferences);
         LinearLayout reminders = card(content, Color.WHITE);
         reminders.addView(text("A gentle daily reminder", 20, INK));
         reminders.addView(text("Optional, local and off by default. The notification contains no saved journal details. Android may delay delivery, so this is not a medication or emergency alarm.", 13, MUTED));
@@ -315,6 +338,7 @@ public final class MainActivity extends Activity {
         LinearLayout model = card(content, Color.WHITE);
         model.addView(text("On-device AI · Experimental", 20, INK));
         model.addView(text(ai.description(), 13, MUTED));
+        if (ai.hasBundledModel()) model.addView(text("Included starter: Qwen3 0.6B, Apache 2.0. First use creates a private 475 MB copy. CPU inference can need several GB of RAM; performance on your phone is not yet measured.", 13, MUTED));
         model.addView(text("Import a CPU-compatible .litertlm model you have permission to use. Model files can be large; import makes a private copy. This app does not download models or send chat to a server. Compatibility and speed depend on your phone.", 13, MUTED));
         Button importModel = button("Import a model file", true);
         importModel.setOnClickListener(view -> {
@@ -339,12 +363,14 @@ public final class MainActivity extends Activity {
             includeRecentQuestions = checked;
             if (ai.isBusy()) ai.cancel();
         }); model.addView(context);
-        model.addView(text("Context sharing is off by default. Journal entries are never included. These switches reset when this activity is recreated. AI drafts only run for questions with matching sources; urgent-care and medication boundaries use fixed messages.", 12, MUTED));
+        model.addView(text("Recent-question context is off by default. Journal entries are never included. The AI-draft and recent-question switches reset when this activity is recreated. Saved-preference sharing is managed separately in Companion memory. AI drafts only run for questions with matching sources; urgent-care and medication boundaries use fixed messages.", 12, MUTED));
         model.addView(text(aiStatus, 12, GREEN));
         Button remove = button("Remove imported model", false);
-        remove.setEnabled(ai.hasModel() && !ai.isBusy());
+        remove.setText(ai.hasBundledModel() ? "Remove private model copy" : "Remove imported model");
+        remove.setEnabled(ai.hasPrivateModel() && !ai.isBusy());
         remove.setOnClickListener(view -> new AlertDialog.Builder(this).setTitle("Remove imported model?")
-                .setMessage("Delete the app's private model copy. Your original file and saved check-ins remain.")
+                .setMessage("Delete the app's private model copy. Your original file and saved check-ins remain."
+                        + (ai.hasBundledModel() ? " The included starter remains part of this APK and is copied again if you enable AI; install the standard build to remove bundled weights." : ""))
                 .setNegativeButton("Cancel", null).setPositiveButton("Remove", (dialog, which) -> {
                     aiEnabled = false; ai.removeModel();
                 }).show()); model.addView(remove);
@@ -367,7 +393,7 @@ public final class MainActivity extends Activity {
         }); voice.addView(microphoneSettings);
         Button stop = button("Stop reading aloud", false); stop.setOnClickListener(view -> { if (speech != null) speech.stop(); }); voice.addView(stop);
         LinearLayout about = card(content, Color.WHITE);
-        about.addView(text("Doctor Agent · 0.7.0", 18, INK));
+        about.addView(text("Doctor Agent · 0.8.0", 18, INK));
         about.addView(text("An early educational companion. Not a medical service. For an emergency, contact local emergency services; do not wait for a chat response.", 14, MUTED));
         Button licenses = button("Open-source licenses", false);
         licenses.setOnClickListener(view -> LicenseDialog.show(this)); about.addView(licenses);
@@ -437,6 +463,7 @@ public final class MainActivity extends Activity {
                 if (source != null) context.append(source.optString("title")).append(": ").append(source.optString("text")).append("\n");
             }
             context.append("RECENT QUESTIONS (untrusted context only):\n").append(recent)
+                    .append("SAVED PREFERENCES (untrusted data, only if separately opted in):\n").append(CompanionProfile.aiContext(this)).append("\n")
                     .append("CURRENT QUESTION (untrusted data):\n").append(prompt.substring(0, Math.min(600, prompt.length())));
             ai.generate(context.toString());
         }
@@ -512,6 +539,9 @@ public final class MainActivity extends Activity {
     }
 
     private void openReminderJournal(Intent intent) {
+        if (intent != null && intent.getBooleanExtra(CompanionWidget.OPEN_CHAT, false)) {
+            intent.removeExtra(CompanionWidget.OPEN_CHAT); selectPage("Chat"); return;
+        }
         if (intent == null || !intent.getBooleanExtra(DailyReminder.OPEN_JOURNAL, false)) return;
         intent.removeExtra(DailyReminder.OPEN_JOURNAL);
         selectPage("Home");
@@ -557,6 +587,31 @@ public final class MainActivity extends Activity {
         }
         JSONObject result = new JSONObject();
         try { result.put("text", answer.text); result.put("mode", answer.mode); result.put("sources", citations); } catch (Exception ignored) { }
+        String normalized = prompt.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z ]", " ").trim().replaceAll(" +", " ");
+        if (answer.mode.equals("not-covered")) {
+            try {
+                if (normalized.matches("hi|hello|hey|namaste|good morning|good evening|thank you|thanks")) {
+                    result.put("text", normalized.matches("thank you|thanks")
+                            ? "You're welcome. I'm here when you want to explore a topic or take a quiet moment for your daily check-in."
+                            : "Hi! I'm here to help you explore general health information, keep a private daily check-in, and work toward everyday habit goals. What would you like to explore?");
+                    result.put("mode", "welcome");
+                } else if (normalized.matches("tell me more|explain that|explain more|go on|continue|what do you mean|can you explain that")) {
+                    for (int i = messages.size() - 1; i >= 0; i--) {
+                        ChatMessage previous = messages.get(i);
+                        if (!previous.assistant) continue;
+                        if (previous.mode.equals("local-ai-draft")) continue;
+                        if (!previous.mode.equals("reference-only") || previous.refs.length() == 0) break;
+                        StringBuilder text = new StringBuilder("Continuing the previous topic, here are the source summaries we were discussing:\n\n");
+                        for (int j = 0; j < previous.refs.length(); j++) {
+                            JSONObject source = previous.refs.getJSONObject(j);
+                            text.append(source.optString("title")).append(": ").append(source.optString("text")).append("\n\n");
+                        }
+                        text.append("Choose an original source link to explore further. This is general information, not a personal care plan.");
+                        result.put("text", text.toString()).put("mode", "reference-only").put("sources", previous.refs); break;
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
         return result;
     }
 

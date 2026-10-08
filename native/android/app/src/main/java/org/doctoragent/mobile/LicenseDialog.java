@@ -12,8 +12,8 @@ import java.nio.charset.StandardCharsets;
 final class LicenseDialog {
     static void show(Activity activity) {
         new AlertDialog.Builder(activity).setTitle("Open-source licenses")
-                .setItems(new String[]{"LiteRT-LM license", "LiteRT-LM third-party notices"}, (choice, selected) ->
-                        showFile(activity, selected == 0 ? "LiteRT-LM-LICENSE.txt" : "LiteRT-LM-THIRD-PARTY-NOTICES.txt"))
+                .setItems(new String[]{"LiteRT-LM license", "LiteRT-LM third-party notices", "Qwen3 model license"}, (choice, selected) ->
+                        showFile(activity, selected == 0 ? "LiteRT-LM-LICENSE.txt" : selected == 1 ? "LiteRT-LM-THIRD-PARTY-NOTICES.txt" : "Qwen3-LICENSE.txt"))
                 .setNegativeButton("Close", null).show();
     }
     private static void showFile(Activity activity, String file) {

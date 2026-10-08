@@ -64,6 +64,11 @@ public final class MainActivity extends Activity {
     private OfflineVoiceInput voiceInput;
     private TextView voiceStatusView;
     private Button speakButton;
+    private ChatHistoryStore chatHistory;
+    private String savedChatId;
+    private TextView chatStorageStatus;
+    private Button saveChatButton;
+    private boolean replayingChat;
 
     private static final class ChatMessage {
         final String text, mode;
@@ -76,9 +81,10 @@ public final class MainActivity extends Activity {
 
     private static final class Session {
         final ArrayList<ChatMessage> messages;
-        final String draft, page;
-        Session(ArrayList<ChatMessage> messages, String draft, String page) {
+        final String draft, page, savedChatId;
+        Session(ArrayList<ChatMessage> messages, String draft, String page, String savedChatId) {
             this.messages = new ArrayList<>(messages); this.draft = draft; this.page = page;
+            this.savedChatId = savedChatId;
         }
     }
 
@@ -88,6 +94,7 @@ public final class MainActivity extends Activity {
         getWindow().setNavigationBarColor(Color.rgb(245, 247, 242));
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
         loadCatalog();
+        chatHistory = new ChatHistoryStore(this);
         ai = new LocalAiModel(this, new LocalAiModel.Listener() {
             @Override public void onStatus(String value) {
                 aiStatus = value;
@@ -114,9 +121,14 @@ public final class MainActivity extends Activity {
         buildScreen();
         Session retained = (Session) getLastNonConfigurationInstance();
         if (retained != null) {
+            savedChatId = retained.savedChatId;
+            replayingChat = true;
             for (ChatMessage message : retained.messages) addBubble(message.text, message.assistant, message.refs, message.mode);
+            replayingChat = false;
+            updateChatStorageStatus();
             question.setText(retained.draft);
             selectPage(retained.page);
+            scroll.post(() -> scroll.fullScroll(View.FOCUS_DOWN));
             openReminderJournal(getIntent());
             return;
         }
@@ -244,10 +256,15 @@ public final class MainActivity extends Activity {
                 ? "Optional on-device voice · Review your draft before sending"
                 : "Voice needs a compatible offline recognizer · Typing always works", 10, MUTED);
         chatPage.addView(voiceStatusView);
+        chatStorageStatus = text("Session only · Save to keep a copy", 10, MUTED); chatPage.addView(chatStorageStatus);
         LinearLayout footer = new LinearLayout(this); footer.setGravity(Gravity.CENTER_VERTICAL);
-        footer.addView(text("Chat stays in this session", 10, MUTED), new LinearLayout.LayoutParams(0, -2, 1));
-        Button clear = button("Clear", false); clear.setTextSize(11);
-        clear.setOnClickListener(v -> confirmClearChat()); footer.addView(clear); chatPage.addView(footer);
+        saveChatButton = button("Save", false); saveChatButton.setTextSize(11);
+        saveChatButton.setContentDescription("Save this conversation on this phone");
+        saveChatButton.setOnClickListener(v -> saveCurrentChat()); footer.addView(saveChatButton, new LinearLayout.LayoutParams(0, -2, 1));
+        Button history = button("History", false); history.setTextSize(11);
+        history.setOnClickListener(v -> showChatHistory()); footer.addView(history, new LinearLayout.LayoutParams(0, -2, 1));
+        Button fresh = button("New", false); fresh.setTextSize(11); fresh.setContentDescription("Start a new conversation");
+        fresh.setOnClickListener(v -> confirmClearChat()); footer.addView(fresh, new LinearLayout.LayoutParams(0, -2, 1)); chatPage.addView(footer);
     }
 
     private void selectPage(String page) {
@@ -445,7 +462,8 @@ public final class MainActivity extends Activity {
                 }).show()); model.addView(remove);
         LinearLayout storage = card(content, Color.WHITE);
         storage.addView(text("Private by default", 20, INK));
-        storage.addView(text("No account, ads or analytics. Chat is not saved to disk. Optional check-ins are encrypted on this phone and excluded from backup. They are not used in chat.", 14, MUTED));
+        storage.addView(text("No account, ads or analytics. Chats stay in this session unless you explicitly save a snapshot. Saved chats, preferences and optional check-ins are encrypted on this phone and excluded from backup. Saved chats are opened only when you choose one in History. Journal entries remain separate from chat.", 14, MUTED));
+        Button history = button("Manage saved chats", false); history.setOnClickListener(view -> showChatHistory()); storage.addView(history);
         Button journal = button("Manage journal & saved entries", true);
         journal.setOnClickListener(view -> CheckInDialog.show(this)); storage.addView(journal);
         Button clear = button("Clear this chat session", false); clear.setOnClickListener(view -> confirmClearChat()); storage.addView(clear);
@@ -472,16 +490,91 @@ public final class MainActivity extends Activity {
     }
 
     private void confirmClearChat() {
-        new AlertDialog.Builder(this).setTitle("Clear chat?")
-                .setMessage("This removes the current conversation. Your saved check-ins stay on this phone.")
-                .setNegativeButton("Cancel", null).setPositiveButton("Clear", (dialog, which) -> {
-                    if (speech != null) speech.stop();
-                    voiceInput.cancel("Voice cancelled. Chat cleared.");
-                    ai.invalidateDraft();
-                    question.setText(""); transcript.removeAllViews(); listenButtons.clear(); messages.clear();
-                    addAssistant("A fresh start. What would you like to explore?", new JSONArray(), "welcome");
-                    Toast.makeText(this, "Chat cleared", Toast.LENGTH_SHORT).show();
-                }).show();
+        confirmLeaveCurrentChat(() -> {
+            resetConversation(); savedChatId = null;
+            addAssistant("A fresh start. What would you like to explore?", new JSONArray(), "welcome");
+            updateChatStorageStatus(); selectPage("Chat");
+        });
+    }
+
+    private boolean hasUserMessages() {
+        for (ChatMessage message : messages) if (!message.assistant) return true;
+        return false;
+    }
+
+    private void confirmLeaveCurrentChat(Runnable next) {
+        if (!hasUserMessages() && question.getText().toString().trim().isEmpty()) { next.run(); return; }
+        new AlertDialog.Builder(this).setTitle("Leave this chat?")
+                .setMessage("The current session and unsent draft will be replaced. Use Save or Update first if you want to keep the latest messages. Existing saved copies and check-ins stay on this phone.")
+                .setNegativeButton("Stay here", null).setPositiveButton("Continue", (dialog, which) -> next.run()).show();
+    }
+
+    private void resetConversation() {
+        if (speech != null) speech.stop();
+        voiceInput.cancel("Voice stopped. Conversation changed."); ai.invalidateDraft();
+        question.setText(""); transcript.removeAllViews(); listenButtons.clear(); messages.clear();
+    }
+
+    private void updateChatStorageStatus() {
+        if (chatStorageStatus != null) chatStorageStatus.setText(savedChatId == null
+                ? "Session only · Save to keep a copy" : "Saved copy exists · Update to keep latest messages");
+        if (saveChatButton != null) {
+            saveChatButton.setText(savedChatId == null ? "Save" : "Update");
+            saveChatButton.setEnabled(hasUserMessages());
+        }
+    }
+
+    private void saveCurrentChat() {
+        if (!hasUserMessages()) { Toast.makeText(this, "Start a conversation before saving", Toast.LENGTH_SHORT).show(); return; }
+        if (savedChatId == null) new AlertDialog.Builder(this).setTitle("Save this chat on your phone?")
+                .setMessage("Save an encrypted copy of the currently visible messages, including source links and labelled AI drafts. The title uses your first question; you can rename or delete it in History. Your unsent draft is excluded. This is a snapshot: use Update after more messages.")
+                .setNegativeButton("Cancel", null).setPositiveButton("Save chat", (dialog, which) -> writeChatSnapshot()).show();
+        else writeChatSnapshot();
+    }
+
+    private void writeChatSnapshot() {
+        String id = savedChatId == null ? java.util.UUID.randomUUID().toString() : savedChatId;
+        try {
+            JSONArray snapshot = new JSONArray();
+            for (ChatMessage message : messages) snapshot.put(new JSONObject().put("text", message.text)
+                    .put("assistant", message.assistant).put("mode", message.mode).put("sources", message.refs));
+            chatHistory.save(id, snapshot); savedChatId = id; updateChatStorageStatus();
+            Toast.makeText(this, "Chat snapshot saved on this phone", Toast.LENGTH_SHORT).show();
+        } catch (Exception error) {
+            String detail = error instanceof IllegalStateException && error.getMessage() != null
+                    && (error.getMessage().startsWith("20 chats") || error.getMessage().startsWith("Saved chats have reached"))
+                    ? error.getMessage() : "The chat could not be saved. Existing saved copies have not been replaced. Try again or review History.";
+            new AlertDialog.Builder(this).setTitle("Chat was not saved").setMessage(detail).setPositiveButton("OK", null).show();
+        }
+    }
+
+    private void showChatHistory() {
+        ChatHistoryDialog.show(this, chatHistory, new ChatHistoryDialog.Listener() {
+            @Override public void open(JSONObject chat) {
+                confirmLeaveCurrentChat(() -> {
+                    ArrayList<ChatMessage> restored = new ArrayList<>();
+                    try {
+                        JSONArray snapshot = chat.getJSONArray("messages");
+                        for (int i = 0; i < snapshot.length(); i++) {
+                            JSONObject message = snapshot.getJSONObject(i);
+                            restored.add(new ChatMessage(message.getString("text"), message.getBoolean("assistant"),
+                                    message.getJSONArray("sources"), message.getString("mode")));
+                        }
+                        String id = chat.getString("id");
+                        resetConversation(); savedChatId = id; replayingChat = true;
+                        for (ChatMessage message : restored) addBubble(message.text, message.assistant, message.refs, message.mode);
+                        replayingChat = false; updateChatStorageStatus(); selectPage("Chat");
+                        scroll.post(() -> scroll.fullScroll(View.FOCUS_DOWN));
+                    } catch (Exception error) {
+                        replayingChat = false;
+                        Toast.makeText(MainActivity.this, "This saved chat could not be opened", Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+            @Override public void deleted(String id) {
+                if (id == null || id.equals(savedChatId)) { savedChatId = null; updateChatStorageStatus(); }
+            }
+        });
     }
 
     private void openSource(String url) {
@@ -814,7 +907,11 @@ public final class MainActivity extends Activity {
             messages.remove(0);
             LinearLayout oldest = (LinearLayout) transcript.getChildAt(0);
             if (oldest != null) {
-                for (int i = 0; i < oldest.getChildCount(); i++) listenButtons.remove(oldest.getChildAt(i));
+                for (Button listen : new ArrayList<>(listenButtons)) {
+                    android.view.ViewParent parent = listen.getParent();
+                    while (parent != null && parent != oldest) parent = parent.getParent();
+                    if (parent == oldest) listenButtons.remove(listen);
+                }
                 transcript.removeViewAt(0);
             }
         }
@@ -886,12 +983,13 @@ public final class MainActivity extends Activity {
         }
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
         params.bottomMargin = dp(11); transcript.addView(messageRow, params);
-        if (android.animation.ValueAnimator.areAnimatorsEnabled()) {
+        if (!replayingChat && android.animation.ValueAnimator.areAnimatorsEnabled()) {
             messageRow.setAlpha(0f); messageRow.setTranslationY(dp(7));
             messageRow.animate().alpha(1f).translationY(0).setDuration(230)
                     .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
         }
-        scroll.post(() -> { if (scroll != null) scroll.fullScroll(View.FOCUS_DOWN); });
+        updateChatStorageStatus();
+        if (!replayingChat) scroll.post(() -> { if (scroll != null) scroll.fullScroll(View.FOCUS_DOWN); });
     }
 
     private boolean lastUserUsedHindi() {
@@ -941,7 +1039,7 @@ public final class MainActivity extends Activity {
     }
 
     @Override public Object onRetainNonConfigurationInstance() {
-        return new Session(messages, question.getText().toString(), selectedPage);
+        return new Session(messages, question.getText().toString(), selectedPage, savedChatId);
     }
 
     @Override protected void onStop() {

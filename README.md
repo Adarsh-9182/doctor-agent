@@ -142,7 +142,7 @@ Journal data is encrypted with AES-GCM using an Android Keystore key and stored 
 - **Library:** all bundled summaries and links to original sources, with an error message when a browser cannot open a link.
 - **You:** journal management, privacy information, voice availability, and chat controls.
 
-The journal pre-fills today's saved entry and can show all retained entries. Chat and its draft are kept in memory during activity configuration changes, such as rotation; they are not restored after process termination. A session retains at most 80 messages. Copying text explicitly places it on the system clipboard, marked sensitive on supported Android versions. Source retrieval remains the default; optional generative drafts are described below. The Mac app and PWA have not received this interface update.
+The journal pre-fills today's saved entry and can show all retained entries. Chat and its draft are kept in memory during activity configuration changes, such as rotation; an unsaved session and its draft are not restored after process termination. Version 0.8.6 adds explicitly saved snapshots, which can be reopened from History. A session retains at most 80 messages. Copying text explicitly places it on the system clipboard, marked sensitive on supported Android versions. Source retrieval remains the default; optional generative drafts are described below. The Mac app and PWA have not received this interface update.
 
 #### Optional local AI drafts (0.5.0)
 
@@ -174,12 +174,14 @@ Reboot, clock/timezone changes, and app updates attempt to reschedule an enabled
 
 The manifest now declares `POST_NOTIFICATIONS` and `RECEIVE_BOOT_COMPLETED` alongside optional microphone access. No internet permission, cloud push, exact-alarm permission, or foreground service has been added. Compilation succeeded; scheduled delivery, reboot behavior, permission handling, and notification navigation have not been tested on a phone. Product testing remains deferred at the user's request.
 
-#### Android companion (0.8.5)
+#### Android companion (0.8.6)
 
 Two debug APKs are produced locally:
 
-- `dist/Doctor-Agent-android-0.8.5-debug.apk`: standard build, without weights.
-- `dist/Doctor-Agent-android-0.8.5-with-model-debug.apk`: includes the pinned Qwen3 0.6B mixed-INT4 starter. No manual model import is needed. Open **You**, enable local AI drafts, then ask a covered topic such as sleep or nutrition in **Chat**.
+- `dist/Doctor-Agent-android-0.8.6-debug.apk`: standard build, without weights.
+- `dist/Doctor-Agent-android-0.8.6-with-model-debug.apk`: includes the pinned Qwen3 0.6B mixed-INT4 starter. No manual model import is needed. Open **You**, enable local AI drafts, then ask a covered topic such as sleep or nutrition in **Chat**.
+
+Version 0.8.6 adds optional encrypted chat history. In Chat, **Save** explicitly stores a snapshot of the current messages, source links and labelled AI drafts; the unsent input is excluded. **Update** replaces that saved snapshot after more messages. Nothing is saved automatically. **History** opens saved conversations and offers rename, individual deletion and delete-all controls. Titles initially use the first question. **New** starts a separate session after a leave confirmation; saved copies remain until explicitly deleted. Saved chat data uses a separate Android Keystore key, AES-GCM and an atomic file in private no-backup storage. Limits are 20 chats, 80 messages per snapshot and 2 MiB total plaintext; reaching a limit prompts the user to delete an older saved chat rather than silently evicting it. Saved source summaries are historical snapshots, not freshly checked evidence. Reopening a chat can restore source-backed follow-up context; the existing separate opt-in still controls whether recent exchanges are passed into local AI. Chats are never loaded in bulk into AI context. See [history changes and validation limits](docs/releases/0.8.6-preview.md).
 
 Version 0.8.5 refreshes the chat UI with source-led status, health-topic starter chips, distinct user/assistant bubbles and short reduced-motion-aware transitions. Starter prompts are editable drafts and are never sent automatically. See [interface changes and validation limits](docs/releases/0.8.5-preview.md). Version 0.8.4 adds bounded Hindi/Hinglish topic retrieval and safety phrases with curated Hindi summaries. See [changes and validation limits](docs/releases/0.8.4-preview.md). Version 0.8.3 polishes card styling, navigation feedback and short page and message transitions. See [interface changes and validation limits](docs/releases/0.8.3-preview.md). The companion conversation updates are described in [0.8.2](docs/releases/0.8.2-preview.md).
 

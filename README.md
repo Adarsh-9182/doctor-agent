@@ -146,7 +146,7 @@ The journal pre-fills today's saved entry and can show all retained entries. Cha
 
 #### Optional local AI drafts (0.5.0)
 
-In the standard build, choose **Import a model file** in **You**, select a CPU-compatible `.litertlm` file, then enable **Add local AI drafts**. The standard APK contains no weights and never downloads them automatically. Version 0.8.0 also offers a separate APK with a pinned starter model included, described below. Review the model's own terms before acquiring or importing it. This runtime supports arm64-v8a and x86_64; device/model compatibility and performance have not been measured on the user's phone.
+In the standard build, choose **Import a model file** in **You**, select a CPU-compatible `.litertlm` file, then enable **Add local AI drafts**. The standard APK contains no weights and never downloads them automatically. The current version also offers a separate APK with a pinned starter model included, described below. Review the model's own terms before acquiring or importing it. This runtime supports arm64-v8a and x86_64; device/model compatibility and performance have not been measured on the user's phone.
 
 Import copies a file of up to 3 GB into private no-backup storage using a temporary file and atomic replacement. This limit is a storage guard, not a promise that a 3 GB model will run. The model can be removed separately from the journal. The APK is larger because it now includes native inference libraries. The app has no internet permission; version 0.6.0 adds optional microphone access as described below. File providers and external browsers have their own network behavior.
 
@@ -174,14 +174,14 @@ Reboot, clock/timezone changes, and app updates attempt to reschedule an enabled
 
 The manifest now declares `POST_NOTIFICATIONS` and `RECEIVE_BOOT_COMPLETED` alongside optional microphone access. No internet permission, cloud push, exact-alarm permission, or foreground service has been added. Compilation succeeded; scheduled delivery, reboot behavior, permission handling, and notification navigation have not been tested on a phone. Product testing remains deferred at the user's request.
 
-#### Model-included companion, memory and widget (0.8.2)
+#### Android companion (0.8.3)
 
 Two debug APKs are produced locally:
 
-- `dist/Doctor-Agent-android-0.8.2-debug.apk`: standard build, without weights.
-- `dist/Doctor-Agent-android-0.8.2-with-model-debug.apk`: includes the pinned Qwen3 0.6B mixed-INT4 starter. No manual model import is needed. Open **You**, enable local AI drafts, then ask a covered topic such as sleep or nutrition in **Chat**.
+- `dist/Doctor-Agent-android-0.8.3-debug.apk`: standard build, without weights.
+- `dist/Doctor-Agent-android-0.8.3-with-model-debug.apk`: includes the pinned Qwen3 0.6B mixed-INT4 starter. No manual model import is needed. Open **You**, enable local AI drafts, then ask a covered topic such as sleep or nutrition in **Chat**.
 
-Version 0.8.2 adds bounded source-backed conversation context, clarification and editable topic suggestions. See [changes and validation limits](docs/releases/0.8.2-preview.md).
+Version 0.8.3 polishes card styling, navigation feedback and short page and message transitions. See [interface changes and validation limits](docs/releases/0.8.3-preview.md). The companion conversation updates are described in [0.8.2](docs/releases/0.8.2-preview.md).
 
 Version 0.8.1 fixes a chat-template mismatch between the pinned starter model and LiteRT-LM 0.18.0. A local draft was generated in the ARM64 API 37 emulator; physical-phone performance and medical correctness remain unverified. See [runtime evidence and limitations](docs/releases/0.8.1-preview.md).
 

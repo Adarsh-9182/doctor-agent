@@ -10,6 +10,7 @@ import android.speech.tts.TextToSpeech;
 import android.speech.tts.Voice;
 import android.view.Gravity;
 import android.view.View;
+import android.view.MotionEvent;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
@@ -35,6 +36,7 @@ public final class MainActivity extends Activity {
     private static final int MUTED = Color.rgb(100, 122, 115);
     private static final int PANEL = Color.WHITE;
     private static final int BACKGROUND = Color.rgb(245, 247, 242);
+    private static final int BORDER = Color.rgb(229, 236, 230);
     private FrameLayout pages;
     private LinearLayout chatPage;
     private String selectedPage = "Home";
@@ -118,7 +120,7 @@ public final class MainActivity extends Activity {
     private void buildScreen() {
         LinearLayout root = column();
         root.setBackgroundColor(BACKGROUND);
-        root.setPadding(dp(16), dp(8), dp(16), dp(8));
+        root.setPadding(dp(18), dp(8), dp(18), dp(8));
         root.setOnApplyWindowInsetsListener((view, insets) -> {
             if (Build.VERSION.SDK_INT >= 30) {
                 android.graphics.Insets bars = insets.getInsets(android.view.WindowInsets.Type.systemBars() | android.view.WindowInsets.Type.ime());
@@ -135,11 +137,11 @@ public final class MainActivity extends Activity {
         header.addView(mark, new LinearLayout.LayoutParams(dp(48), dp(48)));
         LinearLayout brand = column(); brand.setPadding(dp(12), 0, 0, 0);
         TextView name = text("Doctor Agent", 20, INK); name.setTypeface(null, 1);
-        brand.addView(name); brand.addView(text("Your everyday health companion", 11, MUTED));
+        brand.addView(name); brand.addView(text("A little more cared for, each day", 11, MUTED));
         header.addView(brand, new LinearLayout.LayoutParams(0, -2, 1));
         root.addView(header);
         TextView status = text("●  Offline · No account needed", 11, GREEN);
-        status.setPadding(0, dp(10), 0, dp(12)); root.addView(status);
+        status.setPadding(dp(2), dp(10), 0, dp(12)); root.addView(status);
         pages = new FrameLayout(this);
         root.addView(pages, new LinearLayout.LayoutParams(-1, 0, 1));
         buildChat();
@@ -164,7 +166,7 @@ public final class MainActivity extends Activity {
         aiStatusView = text(aiStatus, 11, MUTED);
         chatPage.addView(aiStatusView);
         scroll = new ScrollView(this);
-        transcript = column(); transcript.setPadding(0, dp(2), 0, dp(12));
+        transcript = column(); transcript.setPadding(0, dp(8), 0, dp(12));
         scroll.addView(transcript);
         chatPage.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         LinearLayout compose = new LinearLayout(this); compose.setGravity(Gravity.CENTER_VERTICAL);
@@ -175,14 +177,17 @@ public final class MainActivity extends Activity {
         question.setTextColor(INK); question.setHintTextColor(MUTED);
         question.setSaveEnabled(false); question.setEnabled(!catalog.isEmpty());
         question.setHint("What would you like to explore?");
-        question.setPadding(dp(14), dp(12), dp(14), dp(12)); question.setBackground(round(Color.WHITE, dp(16)));
+        question.setPadding(dp(16), dp(13), dp(16), dp(13));
+        android.graphics.drawable.GradientDrawable inputSurface = round(Color.WHITE, dp(17));
+        inputSurface.setStroke(dp(1), BORDER); question.setBackground(inputSurface); question.setElevation(dp(1));
         question.setImeOptions(EditorInfo.IME_ACTION_SEND);
         question.setOnEditorActionListener((v, action, event) -> { if (action == EditorInfo.IME_ACTION_SEND) { send(); return true; } return false; });
         compose.addView(question, new LinearLayout.LayoutParams(0, -2, 1));
         Button send = button("Send", true);
         send.setEnabled(!catalog.isEmpty()); send.setOnClickListener(v -> send());
         LinearLayout.LayoutParams sendParams = new LinearLayout.LayoutParams(-2, -2);
-        sendParams.leftMargin = dp(8); compose.addView(send, sendParams); chatPage.addView(compose);
+        sendParams.leftMargin = dp(8); compose.addView(send, sendParams);
+        compose.setPadding(0, dp(6), 0, dp(4)); chatPage.addView(compose);
         LinearLayout voiceControls = new LinearLayout(this);
         speakButton = button("Speak", false);
         speakButton.setEnabled(!catalog.isEmpty() && OfflineVoiceInput.available(this));
@@ -215,21 +220,34 @@ public final class MainActivity extends Activity {
         }
         selectedPage = page;
         pages.removeAllViews();
-        if (page.equals("Chat")) pages.addView(chatPage);
+        if (page.equals("Chat")) { pages.addView(chatPage); animatePage(chatPage); }
         else {
             ScrollView pageScroll = new ScrollView(this); pageScroll.setFillViewport(true);
             LinearLayout content = column(); content.setPadding(0, dp(4), 0, dp(16));
             if (page.equals("Home")) buildHome(content);
             else if (page.equals("Library")) buildLibrary(content);
             else buildPrivacy(content);
-            pageScroll.addView(content); pages.addView(pageScroll);
+            pageScroll.addView(content); pages.addView(pageScroll); animatePage(pageScroll);
         }
         for (Button tab : tabs) {
             boolean active = tab.getText().toString().equals(page);
             tab.setSelected(active);
             tab.setTextColor(active ? Color.WHITE : MUTED);
             tab.setBackgroundTintList(android.content.res.ColorStateList.valueOf(active ? GREEN : BACKGROUND));
+            tab.animate().cancel();
+            tab.animate().translationY(active ? -dp(2) : 0).setDuration(160).start();
         }
+    }
+
+    private void animatePage(View page) {
+        page.setAlpha(0f); page.setTranslationY(dp(9));
+        page.post(() -> {
+            if (page.getParent() != pages || !android.animation.ValueAnimator.areAnimatorsEnabled()) {
+                page.setAlpha(1f); page.setTranslationY(0); return;
+            }
+            page.animate().alpha(1f).translationY(0).setDuration(210)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+        });
     }
 
     private void buildHome(LinearLayout content) {
@@ -393,7 +411,10 @@ public final class MainActivity extends Activity {
         }); voice.addView(microphoneSettings);
         Button stop = button("Stop reading aloud", false); stop.setOnClickListener(view -> { if (speech != null) speech.stop(); }); voice.addView(stop);
         LinearLayout about = card(content, Color.WHITE);
-        about.addView(text("Doctor Agent · 0.8.0", 18, INK));
+        String appVersion = "";
+        try { appVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionName; }
+        catch (Exception ignored) {}
+        about.addView(text("Doctor Agent · " + appVersion, 18, INK));
         about.addView(text("An early educational companion. Not a medical service. For an emergency, contact local emergency services; do not wait for a chat response.", 14, MUTED));
         Button licenses = button("Open-source licenses", false);
         licenses.setOnClickListener(view -> LicenseDialog.show(this)); about.addView(licenses);
@@ -428,14 +449,26 @@ public final class MainActivity extends Activity {
         TextView heading = text(value, 23, INK); heading.setTypeface(null, 1); heading.setPadding(0, dp(18), 0, dp(8)); content.addView(heading);
     }
     private LinearLayout card(LinearLayout content, int color) {
-        LinearLayout card = column(); card.setPadding(dp(18), dp(16), dp(18), dp(16)); card.setBackground(round(color, dp(22)));
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2); params.topMargin = dp(14); content.addView(card, params); return card;
+        LinearLayout card = column(); card.setPadding(dp(18), dp(17), dp(18), dp(17));
+        android.graphics.drawable.GradientDrawable surface = round(color, dp(22));
+        surface.setStroke(dp(1), color == Color.WHITE ? BORDER : Color.rgb(215, 234, 220));
+        card.setBackground(surface); card.setElevation(dp(1));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2); params.topMargin = dp(12); content.addView(card, params); return card;
     }
     private Button button(String label, boolean primary) {
         Button button = new Button(this); button.setText(label); button.setAllCaps(false); button.setTextSize(13);
         button.setMinHeight(dp(48)); button.setMinimumHeight(dp(48));
         button.setTextColor(primary ? Color.WHITE : GREEN);
         button.setBackgroundTintList(android.content.res.ColorStateList.valueOf(primary ? GREEN : Color.rgb(234, 240, 232)));
+        button.setOnTouchListener((view, event) -> {
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                view.animate().cancel(); view.animate().scaleX(.985f).scaleY(.985f).setDuration(80).start();
+            } else if (event.getActionMasked() == MotionEvent.ACTION_UP || event.getActionMasked() == MotionEvent.ACTION_CANCEL) {
+                view.animate().cancel(); view.animate().scaleX(1f).scaleY(1f).setDuration(150)
+                        .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+            }
+            return false;
+        });
         return button;
     }
 
@@ -681,7 +714,9 @@ public final class MainActivity extends Activity {
             }
         }
         LinearLayout group = new LinearLayout(this); group.setOrientation(LinearLayout.VERTICAL); group.setPadding(dp(16), dp(14), dp(16), dp(14));
-        group.setBackground(round(assistant ? PANEL : Color.rgb(232, 243, 237), dp(12)));
+        android.graphics.drawable.GradientDrawable bubble = round(assistant ? PANEL : Color.rgb(232, 243, 237), dp(17));
+        bubble.setStroke(dp(1), assistant ? BORDER : Color.rgb(221, 236, 225)); group.setBackground(bubble);
+        group.setElevation(dp(1));
         TextView body = new TextView(this); body.setText(text); body.setTextColor(INK); body.setTextSize(15); body.setLineSpacing(dp(3), 1); body.setTextIsSelectable(true); group.addView(body);
         if (assistant) {
             TextView meta = new TextView(this); meta.setText(mode.equals("local-ai-draft") ? "LOCAL AI DRAFT · NOT VERIFIED" : mode.equals("urgent-care") ? "URGENT · SEEK IN-PERSON HELP" : mode.equals("professional-care") ? "PLEASE ASK A HEALTHCARE PROFESSIONAL" : mode.equals("not-covered") ? "OUTSIDE THIS LIBRARY" : mode.equals("welcome") ? "YOUR COMPANION · GENERAL EDUCATION" : "SOURCE SUMMARY · GENERAL INFORMATION"); meta.setTextColor(MUTED); meta.setTextSize(9); meta.setPadding(0, dp(8), 0, 0); group.addView(meta);
@@ -716,8 +751,12 @@ public final class MainActivity extends Activity {
             if (clipboard != null) clipboard.setPrimaryClip(data);
             Toast.makeText(this, "Copied to your device clipboard", Toast.LENGTH_SHORT).show();
         }); group.addView(copy);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2); params.bottomMargin = dp(10); transcript.addView(group, params);
-        scroll.post(() -> scroll.fullScroll(View.FOCUS_DOWN));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.bottomMargin = dp(9); transcript.addView(group, params);
+        group.setAlpha(0f); group.setTranslationY(dp(5));
+        group.animate().alpha(1f).translationY(0).setDuration(190)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+        scroll.post(() -> { if (scroll != null) scroll.fullScroll(View.FOCUS_DOWN); });
     }
 
     private void loadCatalog() {

@@ -174,14 +174,14 @@ Reboot, clock/timezone changes, and app updates attempt to reschedule an enabled
 
 The manifest now declares `POST_NOTIFICATIONS` and `RECEIVE_BOOT_COMPLETED` alongside optional microphone access. No internet permission, cloud push, exact-alarm permission, or foreground service has been added. Compilation succeeded; scheduled delivery, reboot behavior, permission handling, and notification navigation have not been tested on a phone. Product testing remains deferred at the user's request.
 
-#### Android companion (0.8.4)
+#### Android companion (0.8.5)
 
 Two debug APKs are produced locally:
 
-- `dist/Doctor-Agent-android-0.8.4-debug.apk`: standard build, without weights.
-- `dist/Doctor-Agent-android-0.8.4-with-model-debug.apk`: includes the pinned Qwen3 0.6B mixed-INT4 starter. No manual model import is needed. Open **You**, enable local AI drafts, then ask a covered topic such as sleep or nutrition in **Chat**.
+- `dist/Doctor-Agent-android-0.8.5-debug.apk`: standard build, without weights.
+- `dist/Doctor-Agent-android-0.8.5-with-model-debug.apk`: includes the pinned Qwen3 0.6B mixed-INT4 starter. No manual model import is needed. Open **You**, enable local AI drafts, then ask a covered topic such as sleep or nutrition in **Chat**.
 
-Version 0.8.4 adds bounded Hindi/Hinglish topic retrieval and safety phrases with curated Hindi summaries. See [changes and validation limits](docs/releases/0.8.4-preview.md). Version 0.8.3 polishes card styling, navigation feedback and short page and message transitions. See [interface changes and validation limits](docs/releases/0.8.3-preview.md). The companion conversation updates are described in [0.8.2](docs/releases/0.8.2-preview.md).
+Version 0.8.5 refreshes the chat UI with source-led status, health-topic starter chips, distinct user/assistant bubbles and short reduced-motion-aware transitions. Starter prompts are editable drafts and are never sent automatically. See [interface changes and validation limits](docs/releases/0.8.5-preview.md). Version 0.8.4 adds bounded Hindi/Hinglish topic retrieval and safety phrases with curated Hindi summaries. See [changes and validation limits](docs/releases/0.8.4-preview.md). Version 0.8.3 polishes card styling, navigation feedback and short page and message transitions. See [interface changes and validation limits](docs/releases/0.8.3-preview.md). The companion conversation updates are described in [0.8.2](docs/releases/0.8.2-preview.md).
 
 Version 0.8.1 fixes a chat-template mismatch between the pinned starter model and LiteRT-LM 0.18.0. A local draft was generated in the ARM64 API 37 emulator; physical-phone performance and medical correctness remain unverified. See [runtime evidence and limitations](docs/releases/0.8.1-preview.md).
 

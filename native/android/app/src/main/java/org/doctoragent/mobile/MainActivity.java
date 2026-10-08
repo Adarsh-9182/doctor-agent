@@ -91,7 +91,7 @@ public final class MainActivity extends Activity {
         ai = new LocalAiModel(this, new LocalAiModel.Listener() {
             @Override public void onStatus(String value) {
                 aiStatus = value;
-                if (aiStatusView != null) aiStatusView.setText(value);
+                if (aiStatusView != null) aiStatusView.setText("  Source-led health learning  ·  " + value);
                 if (selectedPage.equals("You")) selectPage("You");
             }
             @Override public void onDraft(String value) {
@@ -169,11 +169,41 @@ public final class MainActivity extends Activity {
 
     private void buildChat() {
         chatPage = column();
-        TextView notice = text("General education · No diagnosis or prescriptions", 11, MUTED);
-        notice.setPadding(0, 0, 0, dp(8)); chatPage.addView(notice);
-        aiStatusView = text(aiStatus, 11, MUTED);
-        chatPage.addView(aiStatusView);
+        LinearLayout trustBar = new LinearLayout(this);
+        trustBar.setGravity(Gravity.CENTER_VERTICAL);
+        trustBar.setPadding(dp(12), dp(8), dp(12), dp(8));
+        trustBar.setBackground(round(Color.rgb(232, 242, 233), dp(16)));
+        TextView shield = text("✓", 13, GREEN); shield.setTypeface(null, 1);
+        trustBar.addView(shield);
+        aiStatusView = text("  Source-led health learning  ·  " + aiStatus, 10, GREEN);
+        trustBar.addView(aiStatusView, new LinearLayout.LayoutParams(0, -2, 1));
+        chatPage.addView(trustBar);
+
+        LinearLayout promptBar = new LinearLayout(this);
+        promptBar.setGravity(Gravity.CENTER_VERTICAL);
+        TextView explore = text("Explore", 11, MUTED); explore.setPadding(0, 0, dp(8), 0);
+        promptBar.addView(explore);
+        android.widget.HorizontalScrollView topicScroll = new android.widget.HorizontalScrollView(this);
+        topicScroll.setHorizontalScrollBarEnabled(false);
+        LinearLayout topicRow = new LinearLayout(this);
+        String[][] starters = {{"Sleep", "Tell me about sleep."}, {"Nutrition", "Tell me about nutrition."},
+                {"Hydration", "Tell me about hydration."}, {"Food safety", "Tell me about food safety."},
+                {"Movement", "Tell me about physical activity."}};
+        for (String[] starter : starters) {
+            Button chip = button(starter[0], false);
+            chip.setTextSize(11); chip.setMinHeight(dp(38)); chip.setMinimumHeight(dp(38));
+            chip.setPadding(dp(10), 0, dp(10), 0);
+            chip.setOnClickListener(view -> offerTopic(starter[1]));
+            LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(-2, dp(38));
+            chipParams.rightMargin = dp(6); topicRow.addView(chip, chipParams);
+        }
+        topicScroll.addView(topicRow);
+        promptBar.addView(topicScroll, new LinearLayout.LayoutParams(0, dp(44), 1));
+        LinearLayout.LayoutParams promptParams = new LinearLayout.LayoutParams(-1, -2);
+        promptParams.topMargin = dp(8); promptParams.bottomMargin = dp(4);
+        chatPage.addView(promptBar, promptParams);
         scroll = new ScrollView(this);
+        scroll.setClipToPadding(false);
         transcript = column(); transcript.setPadding(0, dp(8), 0, dp(12));
         scroll.addView(transcript);
         chatPage.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
@@ -184,14 +214,16 @@ public final class MainActivity extends Activity {
         question.setSingleLine(false); question.setMinLines(1); question.setMaxLines(4); question.setTextSize(15);
         question.setTextColor(INK); question.setHintTextColor(MUTED);
         question.setSaveEnabled(false); question.setEnabled(!catalog.isEmpty());
-        question.setHint("What would you like to explore?");
+        question.setHint("Ask about your health or wellbeing…");
         question.setPadding(dp(16), dp(13), dp(16), dp(13));
-        android.graphics.drawable.GradientDrawable inputSurface = round(Color.WHITE, dp(17));
-        inputSurface.setStroke(dp(1), BORDER); question.setBackground(inputSurface); question.setElevation(dp(1));
+        android.graphics.drawable.GradientDrawable inputSurface = round(Color.WHITE, dp(22));
+        inputSurface.setStroke(dp(1), Color.rgb(213, 226, 216)); question.setBackground(inputSurface); question.setElevation(dp(2));
         question.setImeOptions(EditorInfo.IME_ACTION_SEND);
         question.setOnEditorActionListener((v, action, event) -> { if (action == EditorInfo.IME_ACTION_SEND) { send(); return true; } return false; });
         compose.addView(question, new LinearLayout.LayoutParams(0, -2, 1));
-        Button send = button("Send", true);
+        Button send = button("↑", true);
+        send.setTextSize(20); send.setContentDescription("Send message");
+        send.setMinWidth(dp(52)); send.setMinimumWidth(dp(52));
         send.setEnabled(!catalog.isEmpty()); send.setOnClickListener(v -> send());
         LinearLayout.LayoutParams sendParams = new LinearLayout.LayoutParams(-2, -2);
         sendParams.leftMargin = dp(8); compose.addView(send, sendParams);
@@ -210,7 +242,7 @@ public final class MainActivity extends Activity {
         chatPage.addView(voiceControls);
         voiceStatusView = text(OfflineVoiceInput.available(this)
                 ? "Optional on-device voice · Review your draft before sending"
-                : "On-device voice needs Android 12+ and a compatible recognizer. Typing works.", 10, MUTED);
+                : "Voice needs a compatible offline recognizer · Typing always works", 10, MUTED);
         chatPage.addView(voiceStatusView);
         LinearLayout footer = new LinearLayout(this); footer.setGravity(Gravity.CENTER_VERTICAL);
         footer.addView(text("Chat stays in this session", 10, MUTED), new LinearLayout.LayoutParams(0, -2, 1));
@@ -286,14 +318,25 @@ public final class MainActivity extends Activity {
         settings.setOnClickListener(view -> selectPage("You")); setup.addView(settings);
         Button widget = button("Add companion to home screen", false);
         widget.setOnClickListener(view -> CompanionWidget.requestPin(this)); setup.addView(widget);
-        heading(content, "Start a conversation");
-        content.addView(text("Explore general information from the bundled source library.", 13, MUTED));
-        String[][] prompts = {{"Nutrition", "Tell me about healthy eating"}, {"Rest", "Tell me about sleep"}, {"Hydration", "Tell me about water in diet"}, {"Movement", "Tell me about physical activity"}};
+        heading(content, "A question to get started");
+        content.addView(text("Pick a prompt, make it your own, then send when you're ready.", 13, MUTED));
+        android.widget.HorizontalScrollView startersScroll = new android.widget.HorizontalScrollView(this);
+        startersScroll.setHorizontalScrollBarEnabled(false);
+        LinearLayout starterRow = new LinearLayout(this);
+        String[][] prompts = {{"01  ·  Nutrition", "Tell me about healthy eating"}, {"02  ·  Rest", "Tell me about sleep"},
+                {"03  ·  Hydration", "Tell me about water in diet"}, {"04  ·  Movement", "Tell me about physical activity"}};
         for (String[] topic : prompts) {
-            Button prompt = button(topic[0] + "   →", false); prompt.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
-            prompt.setOnClickListener(view -> { selectPage("Chat"); question.setText(topic[1]); send(); });
-            prompt.setEnabled(!catalog.isEmpty()); content.addView(prompt);
+            Button prompt = button(topic[0] + "\nExplore this topic  →", false);
+            prompt.setGravity(Gravity.START | Gravity.CENTER_VERTICAL); prompt.setTextSize(12);
+            prompt.setMinHeight(dp(72)); prompt.setMinimumHeight(dp(72)); prompt.setPadding(dp(14), dp(8), dp(14), dp(8));
+            prompt.setOnClickListener(view -> { selectPage("Chat"); offerTopic(topic[1]); });
+            prompt.setEnabled(!catalog.isEmpty());
+            LinearLayout.LayoutParams topicParams = new LinearLayout.LayoutParams(dp(178), dp(74));
+            topicParams.rightMargin = dp(9); starterRow.addView(prompt, topicParams);
         }
+        startersScroll.addView(starterRow);
+        LinearLayout.LayoutParams starterParams = new LinearLayout.LayoutParams(-1, dp(82));
+        starterParams.topMargin = dp(6); content.addView(startersScroll, starterParams);
         LinearLayout note = card(content, Color.WHITE);
         note.addView(text("A companion for learning", 16, INK));
         note.addView(text("Source answers work offline. Import a compatible model in You to optionally add local AI drafts. This app cannot assess symptoms, diagnose, prescribe or replace a clinician.", 13, MUTED));
@@ -775,10 +818,12 @@ public final class MainActivity extends Activity {
                 transcript.removeViewAt(0);
             }
         }
-        LinearLayout group = new LinearLayout(this); group.setOrientation(LinearLayout.VERTICAL); group.setPadding(dp(16), dp(14), dp(16), dp(14));
-        android.graphics.drawable.GradientDrawable bubble = round(assistant ? PANEL : Color.rgb(232, 243, 237), dp(17));
-        bubble.setStroke(dp(1), assistant ? BORDER : Color.rgb(221, 236, 225)); group.setBackground(bubble);
-        group.setElevation(dp(1));
+        LinearLayout group = new LinearLayout(this); group.setOrientation(LinearLayout.VERTICAL); group.setPadding(dp(15), dp(13), dp(15), dp(11));
+        android.graphics.drawable.GradientDrawable bubble = round(assistant ? PANEL : Color.rgb(225, 240, 230), assistant ? dp(20) : dp(21));
+        bubble.setStroke(dp(1), assistant ? BORDER : Color.rgb(207, 227, 214)); group.setBackground(bubble);
+        group.setElevation(dp(assistant ? 1 : 0));
+        TextView speaker = text(assistant ? "DOCTOR AGENT" : "YOU", 9, assistant ? GREEN : MUTED);
+        speaker.setTypeface(null, 1); speaker.setLetterSpacing(.06f); speaker.setPadding(0, 0, 0, dp(6)); group.addView(speaker);
         TextView body = new TextView(this); body.setText(text); body.setTextColor(INK); body.setTextSize(15); body.setLineSpacing(dp(3), 1); body.setTextIsSelectable(true); group.addView(body);
         if (assistant) {
             TextView meta = new TextView(this); meta.setText(mode.equals("local-ai-draft") ? "LOCAL AI DRAFT · NOT VERIFIED" : mode.equals("urgent-care") ? "URGENT · SEEK IN-PERSON HELP" : mode.equals("professional-care") ? "PLEASE ASK A HEALTHCARE PROFESSIONAL" : mode.equals("not-covered") ? "OUTSIDE THIS LIBRARY" : mode.equals("welcome") ? "YOUR COMPANION · GENERAL EDUCATION" : "SOURCE SUMMARY · GENERAL INFORMATION"); meta.setTextColor(MUTED); meta.setTextSize(9); meta.setPadding(0, dp(8), 0, 0); group.addView(meta);
@@ -825,11 +870,27 @@ public final class MainActivity extends Activity {
             if (clipboard != null) clipboard.setPrimaryClip(data);
             Toast.makeText(this, "Copied to your device clipboard", Toast.LENGTH_SHORT).show();
         }); group.addView(copy);
+        LinearLayout messageRow = new LinearLayout(this);
+        messageRow.setGravity(assistant ? Gravity.START : Gravity.END);
+        messageRow.setOrientation(LinearLayout.HORIZONTAL);
+        if (assistant) {
+            TextView avatar = text("✚", 12, Color.WHITE); avatar.setGravity(Gravity.CENTER);
+            avatar.setBackground(round(GREEN, dp(11)));
+            LinearLayout.LayoutParams avatarParams = new LinearLayout.LayoutParams(dp(26), dp(26));
+            avatarParams.topMargin = dp(4); avatarParams.rightMargin = dp(7);
+            messageRow.addView(avatar, avatarParams);
+            messageRow.addView(group, new LinearLayout.LayoutParams(0, -2, 1f));
+        } else {
+            messageRow.addView(new View(this), new LinearLayout.LayoutParams(0, 1, .13f));
+            messageRow.addView(group, new LinearLayout.LayoutParams(0, -2, .87f));
+        }
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
-        params.bottomMargin = dp(9); transcript.addView(group, params);
-        group.setAlpha(0f); group.setTranslationY(dp(5));
-        group.animate().alpha(1f).translationY(0).setDuration(190)
-                .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+        params.bottomMargin = dp(11); transcript.addView(messageRow, params);
+        if (android.animation.ValueAnimator.areAnimatorsEnabled()) {
+            messageRow.setAlpha(0f); messageRow.setTranslationY(dp(7));
+            messageRow.animate().alpha(1f).translationY(0).setDuration(230)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+        }
         scroll.post(() -> { if (scroll != null) scroll.fullScroll(View.FOCUS_DOWN); });
     }
 

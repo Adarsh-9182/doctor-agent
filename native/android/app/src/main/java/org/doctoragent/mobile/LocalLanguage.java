@@ -10,7 +10,7 @@ final class LocalLanguage {
             "(?:^|\\b)(mujhe|mujhko|mera|meri|mere|mujh|kya|kaise|kyu|kyun|hai|hain|hoga|"
             + "karu|karo|karna|karni|chahiye|nahi|nahin|paani|pani|neend|nind|batao|samjhao|"
             + "seene|chati|chaati|saans|dawai|dava|goli|khana|khaana|poshan|vyayam|aatmahatya|khudkushi|"
-            + "namaste|namaskar|dhanyavad|dhanyavaad|shukriya|kripya|achha|accha)(?:\\b|$)",
+            + "santulit|bhojan|aahar|khanapan|sharirik|kasrat|namaste|namaskar|dhanyavad|dhanyavaad|shukriya|kripya|achha|accha)(?:\\b|$)",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern MEDICINE_HI = Pattern.compile(
             "(?:\\b(?:dawai|dava|medicine|goli|tablet|insulin|supplement|dose|dosage|mg|mcg)\\b.{0,55}"
@@ -121,17 +121,22 @@ final class LocalLanguage {
                 .replace("khana surakshit", " food safety ").replace("khaana surakshit", " food safety ")
                 .replace("khana store", " food safety ").replace("khaana store", " food safety ")
                 .replace("khana pakana", " food safety ").replace("khaana pakana", " food safety ")
+                .replace("khadya suraksha", " food safety ")
+                .replace("khane ka bhandaran", " food storage ")
+                .replace("sharirik gatividhi", " physical activity ")
                 .replace("food safety", " food safety ");
         String[][] aliases = {
                 {"नींद", "sleep"}, {"सोना", "sleep"}, {"neend", "sleep"}, {"nind", "sleep"}, {"sone", "sleep"},
                 {"पोषण", "nutrition"}, {"खानपान", "nutrition"}, {"sehatmand khana", "healthy eating"},
                 {"healthy khana", "healthy eating"}, {"poshan", "nutrition"}, {"khanapan", "nutrition"},
+                {"संतुलित", "balanced"}, {"santulit", "balanced"}, {"भोजन", "meal"},
+                {"aahar", "nutrition"}, {"आहार", "nutrition"},
                 {"पानी", "water"}, {"जल", "water"}, {"प्यास", "thirst"}, {"paani", "water"},
                 {"pani", "water"}, {"pyas", "thirst"}, {"pyaas", "thirst"},
                 {"व्यायाम", "exercise"}, {"शारीरिक गतिविधि", "physical activity"}, {"एक्सरसाइज", "exercise"},
                 {"vyayam", "exercise"}, {"exercise", "exercise"},
-                {"खाना", "nutrition"}, {"खाना", "nutrition"}, {"खाने", "nutrition"}, {"khaana", "nutrition"},
-                {"khana", "nutrition"}, {"khaane", "nutrition"}, {"bhojan", "nutrition"}
+                {"खाना", "nutrition"}, {"खाने", "nutrition"}, {"khaana", "nutrition"},
+                {"khana", "nutrition"}, {"khaane", "nutrition"}, {"bhojan", "meal"}
         };
         for (String[] alias : aliases) {
             if (alias[0].matches(".*[a-z].*"))
@@ -180,7 +185,7 @@ final class LocalLanguage {
     }
 
     static String normalized(String text) {
-        return text == null ? "" : text.toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}\\s]", " ").trim().replaceAll("\\s+", " ");
+        return text == null ? "" : text.toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{M}\\p{N}\\s]", " ").trim().replaceAll("\\s+", " ");
     }
 
     private static boolean containsAny(String value, String... phrases) {

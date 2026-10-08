@@ -787,7 +787,11 @@ public final class MainActivity extends Activity {
             JSONObject localized = localizedCatalog.get(source.optString("id"));
             JSONArray localizedKeys = localized == null ? null : localized.optJSONArray("keywords");
             if (localizedKeys != null) for (int i=0; i<localizedKeys.length(); i++) keywords.add(localizedKeys.optString(i));
-            sources.add(new EducationEngine.Source(source.optString("id"), source.optString("title"), keywords, source.optString("text")));
+            ArrayList<String> routingTerms = new ArrayList<>();
+            JSONArray routes = source.optJSONArray("retrieval_terms");
+            if (routes != null) for (int i = 0; i < routes.length(); i++) routingTerms.add(routes.optString(i));
+            sources.add(new EducationEngine.Source(source.optString("id"), source.optString("title"), keywords,
+                    source.optString("text"), routingTerms));
         }
         EducationEngine.Answer answer = EducationEngine.answer(prompt, sources);
         JSONArray citations = new JSONArray();
@@ -800,7 +804,7 @@ public final class MainActivity extends Activity {
         if (answer.mode.equals("urgent-care") || answer.mode.equals("professional-care")) return result;
         boolean hindi = LocalLanguage.isHindi(prompt);
         String normalized = ConversationContext.normalize(prompt);
-        if (ConversationContext.isFollowUp(prompt) || LocalLanguage.isFollowUp(prompt)) {
+        if (!answer.mode.equals("reference-only") && (ConversationContext.isFollowUp(prompt) || LocalLanguage.isFollowUp(prompt))) {
             try {
                 ChatMessage previous = previousSourceReply();
                 if (previous == null) {
@@ -956,6 +960,14 @@ public final class MainActivity extends Activity {
                 if (i == 0 && mode.equals("local-ai-draft")) group.addView(text("Source context · These links do not verify the AI draft", 11, MUTED));
                 Button link = button("", false); link.setText("↗ " + source.optString("title") + " — " + source.optString("source")); link.setTextSize(10); link.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
                 String url = source.optString("url"); link.setOnClickListener(v -> openSource(url)); group.addView(link);
+                TextView evidence = text("Bundled app summary (English), not a verbatim quotation:\n\n" + source.optString("text"), 12, MUTED);
+                evidence.setTextIsSelectable(true); evidence.setVisibility(View.GONE);
+                Button details = button("View source summary", false); details.setTextSize(11);
+                details.setOnClickListener(view -> {
+                    boolean opening = evidence.getVisibility() != View.VISIBLE;
+                    evidence.setVisibility(opening ? View.VISIBLE : View.GONE);
+                    details.setText(opening ? "Hide source summary" : "View source summary");
+                }); group.addView(details); group.addView(evidence);
             }
         }
         Button copy = button("Copy text", false); copy.setTextSize(11);

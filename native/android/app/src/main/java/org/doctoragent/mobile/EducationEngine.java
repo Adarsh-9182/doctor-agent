@@ -1,25 +1,25 @@
 package org.doctoragent.mobile;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 /** Source-only education logic. No Android APIs, network calls, or storage. */
 public final class EducationEngine {
-    private static final Set<String> STOP = new HashSet<>(Arrays.asList("a about and are can could do does for give help how i in is it me my of on please should tell the to what when where which why with you your information general read mean explain".split(" ")));
     private static final Pattern URGENT = Pattern.compile("\\b(chest pain|can't breathe|cannot breathe|difficulty breathing|trouble breathing|shortness of breath|face droop|one-sided weakness|severe bleeding|heavy bleeding|suicid\\w*|want to die|kill myself|end my life|hurt myself|self[- ]harm|overdose)\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern MEDICINE = Pattern.compile("\\b(diagnos\\w*|prescrib\\w*|dose|dosage|how many (pills|tablets)|should i take|should i stop|should i start)\\b", Pattern.CASE_INSENSITIVE);
 
     public static final class Source {
         public final String id, title, text;
-        public final List<String> keywords;
+        public final List<String> keywords, retrievalTerms;
         public Source(String id, String title, List<String> keywords, String text) {
-            this.id = id; this.title = title; this.keywords = keywords; this.text = text;
+            this(id, title, keywords, text, Collections.singletonList(title));
+        }
+        public Source(String id, String title, List<String> keywords, String text, List<String> retrievalTerms) {
+            this.id = id; this.title = title; this.text = text;
+            this.keywords = Collections.unmodifiableList(new ArrayList<>(keywords));
+            this.retrievalTerms = Collections.unmodifiableList(new ArrayList<>(retrievalTerms));
         }
     }
 
@@ -33,6 +33,7 @@ public final class EducationEngine {
     }
 
     public static Answer answer(String question, List<Source> catalog) {
+        if (question == null) question = "";
         if (URGENT.matcher(question).find() || LocalLanguage.hasUrgentSignal(question)) {
             String message = LocalLanguage.isHindi(question) ? LocalLanguage.urgentMessage(question)
                     : "This could need urgent, in-person help. Contact your local emergency services or crisis line now, or ask someone nearby to help you. I can’t assess emergencies in chat.";
@@ -43,27 +44,16 @@ public final class EducationEngine {
                     : "I can’t diagnose, prescribe, or recommend starting, stopping, or changing a medicine. A qualified healthcare professional or pharmacist can advise you about your situation. I can help you prepare questions to ask them.";
             return new Answer(message, "professional-care", Collections.emptyList());
         }
-        Set<String> query = new HashSet<>(tokens(question));
-        query.removeAll(STOP);
-        ArrayList<Ranked> ranked = new ArrayList<>();
-        for (Source source : catalog) {
-            Set<String> title = new HashSet<>(tokens(source.title));
-            Set<String> keywords = new HashSet<>();
-            for (String keyword : source.keywords) keywords.addAll(tokens(keyword));
-            Set<String> body = new HashSet<>(tokens(source.text));
-            int score = 0;
-            for (String token : query) score += title.contains(token) ? 4 : keywords.contains(token) ? 2 : body.contains(token) ? 1 : 0;
-            if (score > 0) ranked.add(new Ranked(source, score));
-        }
-        ranked.sort((a, b) -> a.score == b.score ? a.source.id.compareTo(b.source.id) : Integer.compare(b.score, a.score));
-        if (ranked.isEmpty()) {
+        EvidenceRetriever.Result result = EvidenceRetriever.search(question, catalog);
+        if (result.matches.isEmpty()) {
+            if (result.needsClarification) return new Answer(
+                    "Which topic do you mean: sleep, nutrition, hydration, food safety, or movement? The words in your question don't identify a supported topic clearly enough. I can't assess symptoms from this library.",
+                    "clarification", Collections.emptyList());
             return new Answer("I don’t have a suitable source for that topic in my small library yet. Try a general question about nutrition, sleep, hydration, food safety, or physical activity, or ask a qualified healthcare professional.", "not-covered", Collections.emptyList());
         }
-        int cutoff = Math.max(1, (ranked.get(0).score + 1) / 2);
-        StringBuilder text = new StringBuilder("Here’s what my sources say:\n\n");
+        StringBuilder text = new StringBuilder("Here are the bundled summaries for the topics I matched. These summaries may not answer every detail of your question:\n\n");
         List<String> ids = new ArrayList<>();
-        for (Ranked entry : ranked) {
-            if (entry.score < cutoff || ids.size() >= 3) continue;
+        for (EvidenceRetriever.Match entry : result.matches) {
             ids.add(entry.source.id);
             text.append(entry.source.title).append(": ").append(entry.source.text).append("\n\n");
         }
@@ -71,14 +61,4 @@ public final class EducationEngine {
         return new Answer(text.toString(), "reference-only", ids);
     }
 
-    private static List<String> tokens(String value) {
-        List<String> out = new ArrayList<>();
-        for (String token : LocalLanguage.expandTopicAliases(value).toLowerCase(Locale.ROOT).split("[^a-z]+")) if (token.length() >= 3) out.add(token);
-        return out;
-    }
-
-    private static final class Ranked {
-        final Source source; final int score;
-        Ranked(Source source, int score) { this.source = source; this.score = score; }
-    }
 }

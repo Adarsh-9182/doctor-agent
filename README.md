@@ -174,12 +174,14 @@ Reboot, clock/timezone changes, and app updates attempt to reschedule an enabled
 
 The manifest now declares `POST_NOTIFICATIONS` and `RECEIVE_BOOT_COMPLETED` alongside optional microphone access. No internet permission, cloud push, exact-alarm permission, or foreground service has been added. Compilation succeeded; scheduled delivery, reboot behavior, permission handling, and notification navigation have not been tested on a phone. Product testing remains deferred at the user's request.
 
-#### Android companion (0.8.6)
+#### Android companion (0.8.7)
 
 Two debug APKs are produced locally:
 
-- `dist/Doctor-Agent-android-0.8.6-debug.apk`: standard build, without weights.
-- `dist/Doctor-Agent-android-0.8.6-with-model-debug.apk`: includes the pinned Qwen3 0.6B mixed-INT4 starter. No manual model import is needed. Open **You**, enable local AI drafts, then ask a covered topic such as sleep or nutrition in **Chat**.
+- `dist/Doctor-Agent-android-0.8.7-debug.apk`: standard build, without weights.
+- `dist/Doctor-Agent-android-0.8.7-with-model-debug.apk`: includes the pinned Qwen3 0.6B mixed-INT4 starter. No manual model import is needed. Open **You**, enable local AI drafts, then ask a covered topic such as sleep or nutrition in **Chat**.
+
+Version 0.8.7 introduces curated topic routing and field-weighted BM25 source ranking, keeping explicitly requested topics in mention order. Body-only word overlap cannot activate a source. Broad queries prompt clarification, and selected non-health phrases are excluded. It also preserves Devanagari combining marks in safety normalization and adds expandable bundled source summaries beneath citations. The same 50 synthetic development cases improve from 30/50 on 0.8.6 to 50/50; these cases were used during development, not held out or clinician reviewed, and no GPT comparison was performed. See [retrieval changes, reproducible evaluation and limitations](docs/releases/0.8.7-preview.md).
 
 Version 0.8.6 adds optional encrypted chat history. In Chat, **Save** explicitly stores a snapshot of the current messages, source links and labelled AI drafts; the unsent input is excluded. **Update** replaces that saved snapshot after more messages. Nothing is saved automatically. **History** opens saved conversations and offers rename, individual deletion and delete-all controls. Titles initially use the first question. **New** starts a separate session after a leave confirmation; saved copies remain until explicitly deleted. Saved chat data uses a separate Android Keystore key, AES-GCM and an atomic file in private no-backup storage. Limits are 20 chats, 80 messages per snapshot and 2 MiB total plaintext; reaching a limit prompts the user to delete an older saved chat rather than silently evicting it. Saved source summaries are historical snapshots, not freshly checked evidence. Reopening a chat can restore source-backed follow-up context; the existing separate opt-in still controls whether recent exchanges are passed into local AI. Chats are never loaded in bulk into AI context. See [history changes and validation limits](docs/releases/0.8.6-preview.md).
 
@@ -217,4 +219,4 @@ The native Android response engine can be evaluated without the SDK using Java 1
 python3 scripts/evaluate_android.py
 ```
 
-This runs the shared ten synthetic retrieval/boundary cases plus four additional Java-engine cases against the actual source catalog. Passing them verifies the covered software behaviors, not clinical safety, model accuracy or Android UI behavior.
+This runs the shared ten synthetic retrieval/boundary cases plus 40 Android regression cases against the actual source catalog and localized keywords. It compiles the Java engine and its real helper classes. Passing verifies the covered software behaviors, not clinical safety, model accuracy or Android UI behavior. Use `--report dist/diagnostics/retrieval.json` to save JSON results, or `--revision <commit>` to evaluate an earlier engine and catalog against the current case set.

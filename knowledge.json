@@ -4,47 +4,168 @@
     "title": "Nutrition",
     "source": "MedlinePlus: Nutrition",
     "url": "https://medlineplus.gov/nutrition.html",
-    "keywords": ["nutrition", "nutrient", "diet", "dietary", "healthy", "eating", "meal", "meals", "food", "foods"],
-    "text": "Nutrition information covers nutrients, food choices, dietary needs, and eating patterns. Individual needs vary with age, health, culture, and personal circumstances. Use this topic page to explore the source material and discuss individual medical nutrition concerns with a qualified professional."
+    "keywords": [
+      "nutrition",
+      "nutrient",
+      "diet",
+      "dietary",
+      "healthy",
+      "eating",
+      "meal",
+      "meals",
+      "food",
+      "foods"
+    ],
+    "text": "Nutrition information covers nutrients, food choices, dietary needs, and eating patterns. Individual needs vary with age, health, culture, and personal circumstances. Use this topic page to explore the source material and discuss individual medical nutrition concerns with a qualified professional.",
+    "retrieval_terms": [
+      "nutrition",
+      "nutrient",
+      "nutrients",
+      "diet",
+      "dietary",
+      "eating",
+      "meal",
+      "meals"
+    ]
   },
   {
     "id": "myplate-healthy-eating",
     "title": "Healthy eating basics",
     "source": "USDA MyPlate",
     "url": "https://www.myplate.gov/eat-healthy/what-is-myplate",
-    "keywords": ["healthy", "eating", "meal", "meals", "balanced", "plate", "food", "foods", "food groups"],
-    "text": "MyPlate is a visual guide for building balanced meals from food groups. It offers flexible healthy-eating ideas; a single plate pattern is not a personalized treatment plan and may not fit every person's medical or cultural needs. Explore the USDA guide for practical examples."
+    "keywords": [
+      "healthy",
+      "eating",
+      "meal",
+      "meals",
+      "balanced",
+      "plate",
+      "food",
+      "foods",
+      "food groups"
+    ],
+    "text": "MyPlate is a visual guide for building balanced meals from food groups. It offers flexible healthy-eating ideas; a single plate pattern is not a personalized treatment plan and may not fit every person's medical or cultural needs. Explore the USDA guide for practical examples.",
+    "retrieval_terms": [
+      "balanced meal",
+      "balanced meals",
+      "balanced plate",
+      "balanced",
+      "healthy eating",
+      "healthy meal",
+      "healthy meals",
+      "food groups",
+      "myplate"
+    ]
   },
   {
     "id": "medlineplus-sleep",
     "title": "Sleep",
     "source": "MedlinePlus: Sleep Disorders",
     "url": "https://medlineplus.gov/sleepdisorders.html",
-    "keywords": ["sleep", "sleeping", "insomnia", "rest", "tired", "sleep disorder"],
-    "text": "Sleep supports health and daily functioning. MedlinePlus describes sleep disorders, common symptoms, tests, and treatments. Persistent sleep problems or symptoms affecting daily life deserve an individualized conversation with a qualified healthcare professional."
+    "keywords": [
+      "sleep",
+      "sleeping",
+      "insomnia",
+      "rest",
+      "tired",
+      "sleep disorder"
+    ],
+    "text": "Sleep supports health and daily functioning. MedlinePlus describes sleep disorders, common symptoms, tests, and treatments. Persistent sleep problems or symptoms affecting daily life deserve an individualized conversation with a qualified healthcare professional.",
+    "retrieval_terms": [
+      "sleep",
+      "sleeping",
+      "insomnia",
+      "asleep",
+      "sleep disorder"
+    ]
   },
   {
     "id": "medlineplus-water",
     "title": "Water in diet",
     "source": "MedlinePlus: Water in diet",
     "url": "https://medlineplus.gov/ency/article/002471.htm",
-    "keywords": ["water", "hydration", "hydrate", "drink", "drinking", "fluid", "fluids", "thirst"],
-    "text": "Water is needed for normal body functions. Fluid needs can vary with health, activity, weather, pregnancy, and medicines. Some health conditions require individual fluid guidance; ask a qualified professional for advice specific to your situation."
+    "keywords": [
+      "water",
+      "hydration",
+      "hydrate",
+      "drink",
+      "drinking",
+      "fluid",
+      "fluids",
+      "thirst"
+    ],
+    "text": "Water is needed for normal body functions. Fluid needs can vary with health, activity, weather, pregnancy, and medicines. Some health conditions require individual fluid guidance; ask a qualified professional for advice specific to your situation.",
+    "retrieval_terms": [
+      "water",
+      "hydration",
+      "hydrate",
+      "hydrating",
+      "hydrated",
+      "fluid",
+      "fluids",
+      "thirst"
+    ]
   },
   {
     "id": "cdc-food-safety",
     "title": "Food safety",
     "source": "CDC: About Food Safety",
     "url": "https://www.cdc.gov/food-safety/about/index.html",
-    "keywords": ["food", "foods", "foodborne", "safe", "safely", "handling", "handle", "storage", "store", "cook", "cooking", "refrigerate", "refrigerator"],
-    "text": "Food safety practices help reduce foodborne illness. CDC guidance covers keeping food clean, separating raw foods, cooking safely, and refrigerating food promptly. Follow the detailed current guidance from CDC for specific handling and storage questions."
+    "keywords": [
+      "food",
+      "foods",
+      "foodborne",
+      "safe",
+      "safely",
+      "handling",
+      "handle",
+      "storage",
+      "store",
+      "cook",
+      "cooking",
+      "refrigerate",
+      "refrigerator"
+    ],
+    "text": "Food safety practices help reduce foodborne illness. CDC guidance covers keeping food clean, separating raw foods, cooking safely, and refrigerating food promptly. Follow the detailed current guidance from CDC for specific handling and storage questions.",
+    "retrieval_terms": [
+      "food safety",
+      "foodborne",
+      "food poisoning",
+      "food storage",
+      "food handling",
+      "raw food",
+      "raw chicken",
+      "refrigerate",
+      "refrigerator",
+      "store food",
+      "handle food",
+      "cook safely",
+      "cooking safely"
+    ]
   },
   {
     "id": "medlineplus-exercise",
     "title": "Exercise and physical fitness",
     "source": "MedlinePlus: Exercise and physical fitness",
     "url": "https://medlineplus.gov/exerciseandphysicalfitness.html",
-    "keywords": ["exercise", "physical", "fitness", "activity", "active", "workout", "movement"],
-    "text": "Physical activity can support general health. Appropriate activity varies by a person's health, ability, and circumstances. Review MedlinePlus information and ask a healthcare professional about activity that is suitable for an individual medical condition."
+    "keywords": [
+      "exercise",
+      "physical",
+      "fitness",
+      "activity",
+      "active",
+      "workout",
+      "movement"
+    ],
+    "text": "Physical activity can support general health. Appropriate activity varies by a person's health, ability, and circumstances. Review MedlinePlus information and ask a healthcare professional about activity that is suitable for an individual medical condition.",
+    "retrieval_terms": [
+      "exercise",
+      "fitness",
+      "workout",
+      "movement",
+      "physical activity",
+      "physical fitness",
+      "active lifestyle"
+    ]
   }
 ]

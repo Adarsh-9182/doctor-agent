@@ -93,7 +93,7 @@ The optional in-browser model is downloaded only after selecting **Enable on-dev
 
 The PWA model is MLC's prebuilt SmolLM2 1.7B Instruct Q4F32 model. The upstream model card lists Apache-2.0; review the [model card](https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct) and the [WebLLM model configuration](https://github.com/mlc-ai/web-llm/blob/main/src/config.ts) before redistribution. These model weights and WebLLM runtime files are downloaded from their upstream hosts after the user opts in; the chat text is passed to the local browser engine, not included in those download requests.
 
-The repo also contains an early native macOS app source and a native Android project. They provide general education, not clinical care. Android additionally includes an optional local daily check-in journal; neither app includes voice input. The Android debug APK was built successfully on October 7, 2026. Installation and UI behavior on a physical Android phone remain to be checked.
+The repo also contains an early native macOS app source and a native Android project. They provide general education, not clinical care. Android additionally includes an optional local daily check-in journal and optional on-device voice dictation; the Mac app does not include voice input. Android builds have succeeded, but installation and UI behavior on a physical phone remain to be checked.
 
 ### Native Mac app
 
@@ -127,7 +127,7 @@ The build produces `native/android/app/build/outputs/apk/debug/app-debug.apk`. A
 ~/Library/Android/sdk/platform-tools/adb install -r dist/Doctor-Agent-android-debug.apk
 ```
 
-The native Android app uses the device's offline English speech voice when one is available. It disables Listen when no offline English voice is installed. The app requests no internet or microphone permission; source links open in the user's browser. The PWA remains available from the link above using Android Chrome's **Install app** action.
+The native Android app uses the device's offline English speech voice when one is available. It disables Listen when no offline English voice is installed. The app has no internet permission. Version 0.6.0 declares microphone permission for optional dictation, requested at runtime only after choosing Speak; source links open in the user's browser. The PWA remains available from the link above using Android Chrome's **Install app** action.
 
 #### Android daily check-in (0.3.0)
 
@@ -148,13 +148,21 @@ The journal pre-fills today's saved entry and can show all retained entries. Cha
 
 In **You**, choose **Import a model file**, select a CPU-compatible `.litertlm` file, then enable **Add local AI drafts**. No weights are bundled or downloaded automatically. Review the model's own terms before acquiring or importing it. This runtime supports arm64-v8a and x86_64; device/model compatibility and performance have not been measured on the user's phone. A model must be supplied before actual inference can be exercised.
 
-Import copies a file of up to 3 GB into private no-backup storage using a temporary file and atomic replacement. This limit is a storage guard, not a promise that a 3 GB model will run. The model can be removed separately from the journal. The APK is larger because it now includes native inference libraries. The app still has no internet or microphone permission; file providers and external browsers have their own network behavior.
+Import copies a file of up to 3 GB into private no-backup storage using a temporary file and atomic replacement. This limit is a storage guard, not a promise that a 3 GB model will run. The model can be removed separately from the journal. The APK is larger because it now includes native inference libraries. The app has no internet permission; version 0.6.0 adds optional microphone access as described below. File providers and external browsers have their own network behavior.
 
 For questions matched to source summaries, the source answer appears first. If enabled, the CPU runtime attempts a separate AI draft using only those summaries and a bounded question. A separate opt-in switch includes up to three recent user questions, capped at 240 characters each. Journal entries and previous model outputs are never supplied. Each generation uses a fresh conversation, a 2048-token context budget, and a 256-token output limit. The switches default off and reset on activity recreation. Source retrieval does not resolve conversational references such as “what about that?” yet.
 
 The draft is labelled unverified and shown beside its source context, not as a verified answer. Urgent-care, medication-boundary, and uncovered-topic responses bypass generation. A basic output filter rejects certain medication/diagnostic language, URLs, empty responses, and oversized drafts; it does not prove factual grounding or clinical safety. Inference failures retain the source answer. Stop, a new question, clearing chat, or leaving the foreground invalidates pending drafts and requests cancellation. A 60-second timer also requests cancellation; loading/native code may not stop immediately. Runtime crashes and excessive memory use remain possible with incompatible files.
 
 LiteRT-LM is pinned to 0.18.0. Its released license and third-party notices are bundled in `app/src/main/legalAssets/`, included in the APK, and readable offline from **You → Open-source licenses**. See the [official runtime documentation](https://developers.google.com/edge/litert-lm/android). The APK has been compiled, but model import, native generation, timing, cancellation, and UI behavior still require device verification. No clinical validation is claimed.
+
+#### Optional on-device voice dictation (0.6.0)
+
+In Chat, tap **Speak** to request microphone permission. After granting access, tap **Speak** again to start a single dictation session. The app calls Android's explicit on-device recognition API on Android 12+ only when that service is available. It never falls back to the network recognizer. English uses the device's English locale, or `en-IN` when the device locale is another language. The phone must have a suitable offline recognition language pack; service availability alone does not guarantee that pack is installed.
+
+Only final recognized text becomes a draft; it is never sent automatically. An existing typed draft offers Append, Replace, or Cancel. The app does not save audio or partial results. Dictation stops on cancellation, a 20-second timeout, leaving Chat, sending/clearing a question, reading an answer aloud, or losing activity focus. You can manage microphone permission from **You**. Denied permission, missing services/languages, and recognizer errors preserve typing. Speech recognition depends on the system provider; the app requests the on-device path rather than claiming control over that provider's internals.
+
+The APK has been compiled; no microphone, speech-provider, or device UI testing has been performed for this feature. Testing remains deferred at the user's request. See the [Android SpeechRecognizer documentation](https://developer.android.com/reference/android/speech/SpeechRecognizer).
 
 The native Android response engine can be evaluated without the SDK using Java 17 and Python:
 

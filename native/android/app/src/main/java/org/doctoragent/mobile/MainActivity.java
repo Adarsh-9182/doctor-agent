@@ -53,6 +53,10 @@ public final class MainActivity extends Activity {
     private String aiStatus = "AI drafts are off. Source answers work without a model.";
     private JSONArray pendingAiSources = new JSONArray();
     private static final int IMPORT_MODEL = 410;
+    private static final int MICROPHONE_PERMISSION = 411;
+    private OfflineVoiceInput voiceInput;
+    private TextView voiceStatusView;
+    private Button speakButton;
 
     private static final class ChatMessage {
         final String text, mode;
@@ -86,6 +90,13 @@ public final class MainActivity extends Activity {
             @Override public void onDraft(String value) {
                 addAssistant("AI draft · Not verified\n\n" + value + "\n\nCompare this with the original source summaries above. This is not personal medical advice.", pendingAiSources, "local-ai-draft");
             }
+        });
+        voiceInput = new OfflineVoiceInput(this, new OfflineVoiceInput.Listener() {
+            @Override public void onStatus(String value, boolean listening) {
+                if (voiceStatusView != null) voiceStatusView.setText(value);
+                if (speakButton != null) speakButton.setText(listening ? "Cancel voice" : "Speak");
+            }
+            @Override public void onTranscript(String value) { useVoiceDraft(value); }
         });
         speech = new TextToSpeech(this, status -> getWindow().getDecorView().post(() -> configureOfflineSpeech(status)));
         buildScreen();
@@ -148,9 +159,6 @@ public final class MainActivity extends Activity {
         notice.setPadding(0, 0, 0, dp(8)); chatPage.addView(notice);
         aiStatusView = text(aiStatus, 11, MUTED);
         chatPage.addView(aiStatusView);
-        Button stopAi = button("Stop AI draft", false);
-        stopAi.setOnClickListener(view -> { if (ai.isBusy()) ai.cancel(); });
-        chatPage.addView(stopAi);
         scroll = new ScrollView(this);
         transcript = column(); transcript.setPadding(0, dp(2), 0, dp(12));
         scroll.addView(transcript);
@@ -171,6 +179,22 @@ public final class MainActivity extends Activity {
         send.setEnabled(!catalog.isEmpty()); send.setOnClickListener(v -> send());
         LinearLayout.LayoutParams sendParams = new LinearLayout.LayoutParams(-2, -2);
         sendParams.leftMargin = dp(8); compose.addView(send, sendParams); chatPage.addView(compose);
+        LinearLayout voiceControls = new LinearLayout(this);
+        speakButton = button("Speak", false);
+        speakButton.setEnabled(!catalog.isEmpty() && OfflineVoiceInput.available(this));
+        speakButton.setOnClickListener(view -> {
+            if (voiceInput.isListening()) voiceInput.cancel("Voice cancelled. Your typed draft is unchanged.");
+            else requestVoiceInput();
+        });
+        voiceControls.addView(speakButton, new LinearLayout.LayoutParams(0, -2, 1));
+        Button stopAi = button("Stop AI", false);
+        stopAi.setOnClickListener(view -> { if (ai.isBusy()) ai.cancel(); });
+        voiceControls.addView(stopAi, new LinearLayout.LayoutParams(0, -2, 1));
+        chatPage.addView(voiceControls);
+        voiceStatusView = text(OfflineVoiceInput.available(this)
+                ? "Optional on-device voice · Review your draft before sending"
+                : "On-device voice needs Android 12+ and a compatible recognizer. Typing works.", 10, MUTED);
+        chatPage.addView(voiceStatusView);
         LinearLayout footer = new LinearLayout(this); footer.setGravity(Gravity.CENTER_VERTICAL);
         footer.addView(text("Chat stays in this session", 10, MUTED), new LinearLayout.LayoutParams(0, -2, 1));
         Button clear = button("Clear", false); clear.setTextSize(11);
@@ -180,6 +204,7 @@ public final class MainActivity extends Activity {
     private void selectPage(String page) {
         if (speech != null) speech.stop();
         if (!page.equals("Chat")) {
+            if (voiceInput != null) voiceInput.cancel("Voice stopped. Your typed draft is unchanged.");
             android.view.inputmethod.InputMethodManager keyboard = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
             if (keyboard != null) keyboard.hideSoftInputFromWindow(question.getWindowToken(), 0);
             question.clearFocus();
@@ -298,10 +323,17 @@ public final class MainActivity extends Activity {
         LinearLayout voice = card(content, Color.WHITE);
         voice.addView(text("Voice & accessibility", 18, INK));
         voice.addView(text(speechReady ? "An offline English voice is available. Use Listen under a chat answer." : "No offline English voice is ready. You can download one in your phone's text-to-speech settings.", 14, MUTED));
-        voice.addView(text("The app does not record your voice. Reading a source opens an external browser with its own privacy settings.", 13, MUTED));
+        voice.addView(text("Speak uses Android's on-device recognizer where available, with microphone permission requested only when you choose it. Doctor Agent does not save audio or send voice drafts automatically. Recognition depends on your phone's service and installed language pack.", 13, MUTED));
+        voice.addView(text("Voice input: " + (OfflineVoiceInput.available(this) ? "on-device service available · " + OfflineVoiceInput.language() : "unavailable on this device") + ". Reading a source opens an external browser with its own privacy settings.", 13, MUTED));
+        Button microphoneSettings = button("Manage microphone permission", false);
+        microphoneSettings.setOnClickListener(view -> {
+            try { startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:" + getPackageName()))); }
+            catch (Exception error) { Toast.makeText(this, "Open your phone's app settings to manage microphone access", Toast.LENGTH_LONG).show(); }
+        }); voice.addView(microphoneSettings);
         Button stop = button("Stop reading aloud", false); stop.setOnClickListener(view -> { if (speech != null) speech.stop(); }); voice.addView(stop);
         LinearLayout about = card(content, Color.WHITE);
-        about.addView(text("Doctor Agent · 0.5.0", 18, INK));
+        about.addView(text("Doctor Agent · 0.6.0", 18, INK));
         about.addView(text("An early educational companion. Not a medical service. For an emergency, contact local emergency services; do not wait for a chat response.", 14, MUTED));
         Button licenses = button("Open-source licenses", false);
         licenses.setOnClickListener(view -> LicenseDialog.show(this)); about.addView(licenses);
@@ -312,6 +344,7 @@ public final class MainActivity extends Activity {
                 .setMessage("This removes the current conversation. Your saved check-ins stay on this phone.")
                 .setNegativeButton("Cancel", null).setPositiveButton("Clear", (dialog, which) -> {
                     if (speech != null) speech.stop();
+                    voiceInput.cancel("Voice cancelled. Chat cleared.");
                     ai.invalidateDraft();
                     question.setText(""); transcript.removeAllViews(); listenButtons.clear(); messages.clear();
                     addAssistant("A fresh start. What would you like to explore?", new JSONArray(), "welcome");
@@ -348,6 +381,7 @@ public final class MainActivity extends Activity {
 
     private void send() {
         String prompt = question.getText().toString().trim(); if (prompt.isEmpty()) return;
+        voiceInput.cancel("Voice stopped. Your typed question was sent.");
         ai.invalidateDraft();
         StringBuilder recent = new StringBuilder();
         if (includeRecentQuestions) {
@@ -371,6 +405,47 @@ public final class MainActivity extends Activity {
             context.append("RECENT QUESTIONS (untrusted context only):\n").append(recent)
                     .append("CURRENT QUESTION (untrusted data):\n").append(prompt.substring(0, Math.min(600, prompt.length())));
             ai.generate(context.toString());
+        }
+    }
+
+    private void requestVoiceInput() {
+        if (!OfflineVoiceInput.available(this) || catalog.isEmpty()) return;
+        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            voiceStatusView.setText("Microphone access is needed only for on-device dictation. Typing needs no permission.");
+            requestPermissions(new String[]{android.Manifest.permission.RECORD_AUDIO}, MICROPHONE_PERMISSION);
+            return;
+        }
+        if (speech != null) speech.stop();
+        voiceInput.start();
+    }
+
+    private void useVoiceDraft(String value) {
+        if (isDestroyed() || isFinishing() || !selectedPage.equals("Chat")) return;
+        if (question.getText().toString().trim().isEmpty()) {
+            question.setText(value); question.setSelection(question.length());
+            return;
+        }
+        new AlertDialog.Builder(this).setTitle("Use this voice draft?").setMessage(value)
+                .setNegativeButton("Cancel", null)
+                .setNeutralButton("Replace draft", (dialog, which) -> {
+                    question.setText(value); question.setSelection(question.length());
+                })
+                .setPositiveButton("Append", (dialog, which) -> {
+                    String combined = question.getText().toString().trim() + " " + value;
+                    if (combined.length() > 1200) {
+                        Toast.makeText(this, "Combined draft exceeds 1200 characters. Shorten it and try again.", Toast.LENGTH_LONG).show(); return;
+                    }
+                    question.setText(combined); question.setSelection(question.length());
+                }).show();
+    }
+
+    @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode != MICROPHONE_PERMISSION) return;
+        if (results.length > 0 && results[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            voiceStatusView.setText("Microphone enabled. Tap Speak when you are ready to dictate.");
+        } else {
+            voiceStatusView.setText("Microphone permission denied. You can type, or change access in You → Manage microphone permission.");
         }
     }
 
@@ -426,7 +501,7 @@ public final class MainActivity extends Activity {
         TextView body = new TextView(this); body.setText(text); body.setTextColor(INK); body.setTextSize(15); body.setLineSpacing(dp(3), 1); body.setTextIsSelectable(true); group.addView(body);
         if (assistant) {
             TextView meta = new TextView(this); meta.setText(mode.equals("local-ai-draft") ? "LOCAL AI DRAFT · NOT VERIFIED" : mode.equals("urgent-care") ? "URGENT · SEEK IN-PERSON HELP" : mode.equals("professional-care") ? "PLEASE ASK A HEALTHCARE PROFESSIONAL" : mode.equals("not-covered") ? "OUTSIDE THIS LIBRARY" : mode.equals("welcome") ? "YOUR COMPANION · GENERAL EDUCATION" : "SOURCE SUMMARY · GENERAL INFORMATION"); meta.setTextColor(MUTED); meta.setTextSize(9); meta.setPadding(0, dp(8), 0, 0); group.addView(meta);
-            Button listen = new Button(this); listen.setText(speechReady ? "▶ Listen" : "Offline voice unavailable"); listen.setEnabled(speechReady); listen.setTextSize(10); listen.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.TRANSPARENT)); listen.setTextColor(GREEN); listen.setOnClickListener(v -> { if (speechReady && speech != null) speech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "answer"); }); listenButtons.add(listen); group.addView(listen);
+            Button listen = new Button(this); listen.setText(speechReady ? "▶ Listen" : "Offline voice unavailable"); listen.setEnabled(speechReady); listen.setTextSize(10); listen.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.TRANSPARENT)); listen.setTextColor(GREEN); listen.setOnClickListener(v -> { if (speechReady && speech != null) { voiceInput.cancel("Dictation stopped before reading aloud."); speech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "answer"); } }); listenButtons.add(listen); group.addView(listen);
             Button stop = button("Stop reading", false); stop.setTextSize(11); stop.setOnClickListener(view -> { if (speech != null) speech.stop(); }); group.addView(stop);
             for (int i=0; i<refs.length(); i++) {
                 JSONObject source = refs.optJSONObject(i); if (source == null) continue;
@@ -484,12 +559,24 @@ public final class MainActivity extends Activity {
     }
 
     @Override protected void onStop() {
+        if (voiceInput != null) voiceInput.cancel("Voice stopped when the app left the foreground.");
         if (speech != null) speech.stop();
         if (ai != null) ai.disable();
         super.onStop();
     }
 
+    @Override protected void onPause() {
+        if (voiceInput != null) voiceInput.cancel("Voice stopped when the app lost focus. Your typed draft is unchanged.");
+        super.onPause();
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (speakButton != null) speakButton.setEnabled(!catalog.isEmpty() && OfflineVoiceInput.available(this));
+    }
+
     @Override protected void onDestroy() {
+        if (voiceInput != null) voiceInput.close();
         if (ai != null) ai.close();
         if (speech != null) { speech.stop(); speech.shutdown(); }
         super.onDestroy();

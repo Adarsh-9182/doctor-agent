@@ -133,7 +133,7 @@ The native Android app uses the device's offline English speech voice when one i
 
 Open **Daily check-in** to record sleep hours, a self-rated energy score, and an optional goal. Each save requires selecting the local-save checkbox. There is one entry per local calendar date; another save replaces today's entry. Up to 30 daily entries are retained, and the seven most recent are displayed. These entries are a personal journal, not an assessment or personalized medical advice, and are not passed into chat.
 
-Journal data is encrypted with AES-GCM using an Android Keystore key and stored in the app's private no-backup directory. App backup is disabled. **Delete all saved check-ins** removes the journal after confirmation; clearing chat does not clear the journal. Uninstalling the app also removes its local data. This version has no reminders or account sync. The updated APK must still be exercised on a physical phone; a successful build alone does not establish runtime behavior or clinical safety.
+Journal data is encrypted with AES-GCM using an Android Keystore key and stored in the app's private no-backup directory. App backup is disabled. **Delete all saved check-ins** removes the journal after confirmation; clearing chat does not clear the journal. Uninstalling the app also removes its local data. There is no account sync; version 0.7.0 adds optional local reminders. The updated APK must still be exercised on a physical phone; a successful build alone does not establish runtime behavior or clinical safety.
 
 #### Android companion interface (0.4.0)
 
@@ -163,6 +163,16 @@ In Chat, tap **Speak** to request microphone permission. After granting access, 
 Only final recognized text becomes a draft; it is never sent automatically. An existing typed draft offers Append, Replace, or Cancel. The app does not save audio or partial results. Dictation stops on cancellation, a 20-second timeout, leaving Chat, sending/clearing a question, reading an answer aloud, or losing activity focus. You can manage microphone permission from **You**. Denied permission, missing services/languages, and recognizer errors preserve typing. Speech recognition depends on the system provider; the app requests the on-device path rather than claiming control over that provider's internals.
 
 The APK has been compiled; no microphone, speech-provider, or device UI testing has been performed for this feature. Testing remains deferred at the user's request. See the [Android SpeechRecognizer documentation](https://developer.android.com/reference/android/speech/SpeechRecognizer).
+
+#### Optional daily reminder (0.7.0)
+
+In **You**, choose a reminder time and enable the daily reminder. Reminders default off. Android 13+ requests notification permission only on enable; blocked app/channel notifications are reported in the UI, with a link to system notification settings. Turning the reminder off cancels its pending alarm and visible reminder notification. Deleting journal entries does not change the reminder setting.
+
+The scheduler uses one local inexact alarm, then schedules the next local calendar date when it fires. It requests no exact-alarm access. Notification text is generic and contains no journal values; tapping it opens the check-in dialog. Only the enabled flag, preferred time, and next due timestamp are stored in ordinary private preferences. No journal or AI context is read by the reminder receiver.
+
+Reboot, clock/timezone changes, and app updates attempt to reschedule an enabled reminder; returning to the app attempts to restore its saved due time. A saved due time less than eight hours late may be delivered after reopening; older missed reminders are skipped. Device force-stop, notification settings, battery policies, and system scheduling can prevent or delay delivery. This is an optional journal prompt, not a medication or emergency alarm. See the [Android alarm documentation](https://developer.android.com/develop/background-work/services/alarms).
+
+The manifest now declares `POST_NOTIFICATIONS` and `RECEIVE_BOOT_COMPLETED` alongside optional microphone access. No internet permission, cloud push, exact-alarm permission, or foreground service has been added. Compilation succeeded; scheduled delivery, reboot behavior, permission handling, and notification navigation have not been tested on a phone. Product testing remains deferred at the user's request.
 
 The native Android response engine can be evaluated without the SDK using Java 17 and Python:
 

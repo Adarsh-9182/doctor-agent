@@ -54,6 +54,8 @@ public final class MainActivity extends Activity {
     private JSONArray pendingAiSources = new JSONArray();
     private static final int IMPORT_MODEL = 410;
     private static final int MICROPHONE_PERMISSION = 411;
+    private static final int NOTIFICATION_PERMISSION = 412;
+    private boolean reminderEnableRequested;
     private OfflineVoiceInput voiceInput;
     private TextView voiceStatusView;
     private Button speakButton;
@@ -105,10 +107,12 @@ public final class MainActivity extends Activity {
             for (ChatMessage message : retained.messages) addBubble(message.text, message.assistant, message.refs, message.mode);
             question.setText(retained.draft);
             selectPage(retained.page);
+            openReminderJournal(getIntent());
             return;
         }
         addAssistant(catalog.isEmpty() ? "The bundled source library could not load. Reinstall a complete app build before using chat." : "Hi, I’m Doctor Agent. I can help explore general topics like nutrition, sleep, hydration, food safety, and movement. What would you like to understand?", new JSONArray(), "welcome");
         selectPage("Home");
+        openReminderJournal(getIntent());
     }
 
     private void buildScreen() {
@@ -238,6 +242,9 @@ public final class MainActivity extends Activity {
         TextView headline = text("How are you feeling today?", 21, INK); headline.setTypeface(null, 1); hero.addView(headline);
         hero.addView(text("Notice your sleep, energy and one small intention. Save only if you choose.", 14, INK));
         hero.addView(text(todayStatus(), 12, MUTED));
+        if (DailyReminder.enabled(this)) hero.addView(text(DailyReminder.allowed(this)
+                ? "Daily reminder around " + DailyReminder.timeLabel(this)
+                : "Reminder saved · Notifications are currently blocked", 12, MUTED));
         Button checkIn = button("Open daily check-in", true);
         checkIn.setOnClickListener(view -> CheckInDialog.show(this, () -> { if (selectedPage.equals("Home")) selectPage("Home"); })); hero.addView(checkIn);
         heading(content, "Start a conversation");
@@ -278,6 +285,33 @@ public final class MainActivity extends Activity {
 
     private void buildPrivacy(LinearLayout content) {
         heading(content, "Your space. Your choice.");
+        LinearLayout reminders = card(content, Color.WHITE);
+        reminders.addView(text("A gentle daily reminder", 20, INK));
+        reminders.addView(text("Optional, local and off by default. The notification contains no saved journal details. Android may delay delivery, so this is not a medication or emergency alarm.", 13, MUTED));
+        boolean reminderEnabled = DailyReminder.enabled(this);
+        reminders.addView(text(reminderEnabled
+                ? (DailyReminder.allowed(this) ? "On · Around " : "Saved · Notifications blocked · Around ") + DailyReminder.timeLabel(this)
+                : "Off · Preferred time " + DailyReminder.timeLabel(this), 14, GREEN));
+        Button time = button("Choose reminder time", false);
+        time.setOnClickListener(view -> new android.app.TimePickerDialog(this, (picker, hour, minute) -> {
+            boolean saved = DailyReminder.setTime(this, hour, minute);
+            Toast.makeText(this, saved ? "Reminder time saved" : "Could not schedule reminder. Please try again.", Toast.LENGTH_LONG).show();
+            if (selectedPage.equals("You")) selectPage("You");
+        }, DailyReminder.hour(this), DailyReminder.minute(this), android.text.format.DateFormat.is24HourFormat(this)).show());
+        reminders.addView(time);
+        Button reminderToggle = button(reminderEnabled ? "Turn reminder off" : "Enable daily reminder", !reminderEnabled);
+        reminderToggle.setOnClickListener(view -> {
+            if (DailyReminder.enabled(this)) {
+                reminderEnableRequested = false; DailyReminder.disable(this);
+                Toast.makeText(this, "Daily reminder turned off", Toast.LENGTH_SHORT).show(); selectPage("You");
+            } else requestReminderEnable();
+        }); reminders.addView(reminderToggle);
+        Button notifications = button("Notification settings", false);
+        notifications.setOnClickListener(view -> {
+            try { startActivity(new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getPackageName())); }
+            catch (Exception error) { Toast.makeText(this, "Open notification settings for Doctor Agent in your phone settings", Toast.LENGTH_LONG).show(); }
+        }); reminders.addView(notifications);
         LinearLayout model = card(content, Color.WHITE);
         model.addView(text("On-device AI · Experimental", 20, INK));
         model.addView(text(ai.description(), 13, MUTED));
@@ -333,7 +367,7 @@ public final class MainActivity extends Activity {
         }); voice.addView(microphoneSettings);
         Button stop = button("Stop reading aloud", false); stop.setOnClickListener(view -> { if (speech != null) speech.stop(); }); voice.addView(stop);
         LinearLayout about = card(content, Color.WHITE);
-        about.addView(text("Doctor Agent · 0.6.0", 18, INK));
+        about.addView(text("Doctor Agent · 0.7.0", 18, INK));
         about.addView(text("An early educational companion. Not a medical service. For an emergency, contact local emergency services; do not wait for a chat response.", 14, MUTED));
         Button licenses = button("Open-source licenses", false);
         licenses.setOnClickListener(view -> LicenseDialog.show(this)); about.addView(licenses);
@@ -441,12 +475,55 @@ public final class MainActivity extends Activity {
 
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
         super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode == NOTIFICATION_PERMISSION) {
+            boolean requested = reminderEnableRequested;
+            reminderEnableRequested = false;
+            boolean granted = results.length > 0 && results[0] == android.content.pm.PackageManager.PERMISSION_GRANTED;
+            if (granted && requested) finishReminderEnable();
+            else {
+                Toast.makeText(this, granted ? "Notification access enabled. Choose Enable daily reminder to schedule it."
+                        : "Notifications denied. Daily reminder was not enabled.", Toast.LENGTH_LONG).show();
+                if (selectedPage.equals("You")) selectPage("You");
+            }
+            return;
+        }
         if (requestCode != MICROPHONE_PERMISSION) return;
         if (results.length > 0 && results[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
             voiceStatusView.setText("Microphone enabled. Tap Speak when you are ready to dictate.");
         } else {
             voiceStatusView.setText("Microphone permission denied. You can type, or change access in You → Manage microphone permission.");
         }
+    }
+
+    private void requestReminderEnable() {
+        DailyReminder.createChannel(this);
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            reminderEnableRequested = true;
+            requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION);
+        } else finishReminderEnable();
+    }
+
+    private void finishReminderEnable() {
+        boolean enabled = DailyReminder.enable(this);
+        Toast.makeText(this, enabled ? "Reminder enabled around " + DailyReminder.timeLabel(this)
+                : "Could not enable reminder. Check notification settings and try again.", Toast.LENGTH_LONG).show();
+        if (selectedPage.equals("You")) selectPage("You");
+    }
+
+    private void openReminderJournal(Intent intent) {
+        if (intent == null || !intent.getBooleanExtra(DailyReminder.OPEN_JOURNAL, false)) return;
+        intent.removeExtra(DailyReminder.OPEN_JOURNAL);
+        selectPage("Home");
+        getWindow().getDecorView().post(() -> {
+            if (!isDestroyed() && !isFinishing()) CheckInDialog.show(this, () -> {
+                if (!isDestroyed() && selectedPage.equals("Home")) selectPage("Home");
+            });
+        });
+    }
+
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent); setIntent(intent); openReminderJournal(intent);
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -573,6 +650,8 @@ public final class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         if (speakButton != null) speakButton.setEnabled(!catalog.isEmpty() && OfflineVoiceInput.available(this));
+        if (!DailyReminder.restore(this, false)) Toast.makeText(this, "Daily reminder could not be restored. Review it in You.", Toast.LENGTH_LONG).show();
+        if (pages != null && selectedPage.equals("You")) selectPage("You");
     }
 
     @Override protected void onDestroy() {

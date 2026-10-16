@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "id": "appointment-checklist",
+  "name": "Appointment checklist",
+  "description": "Make a checklist of documents and questions to bring to an appointment.",
+  "version": "1.0.0",
+  "operation": "checklist",
+  "permissions": ["read:question"],
+  "triggers": ["checklist", "appointment bag"],
+  "items": ["Bring copies of reports you want to discuss.", "Write down your main questions.", "Bring your own current medicine and allergy list.", "Ask the clinic about any appointment preparation instructions."]
+}

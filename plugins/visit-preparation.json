@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "id": "visit-preparation",
+  "name": "Doctor visit preparation",
+  "description": "Organize the current question and explicitly shared notes into a factual draft for a clinician.",
+  "version": "1.0.0",
+  "operation": "visit_brief",
+  "permissions": ["read:question", "read:notes"],
+  "triggers": ["visit", "appointment", "doctor", "brief", "summary", "doctor ke liye", "डॉक्टर"],
+  "items": ["What information is missing from my notes?", "Which concerns should we discuss first?", "Are my medicine and allergy lists complete?", "What follow-up should I arrange with you?"]
+}

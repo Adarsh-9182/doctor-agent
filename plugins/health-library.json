@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "id": "health-library",
+  "name": "Health reference library",
+  "description": "Retrieve attributed, bundled health education summaries. No external search or diagnosis.",
+  "version": "1.0.0",
+  "operation": "reference_search",
+  "permissions": ["read:question"],
+  "triggers": []
+}

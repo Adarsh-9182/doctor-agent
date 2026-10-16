@@ -35,6 +35,13 @@ class AgentCoreTests(unittest.TestCase):
         self.assertTrue(app.model_is_loopback("http://127.0.0.1:8080/v1/chat/completions"))
         self.assertTrue(app.model_is_loopback("http://localhost:8080/v1/chat/completions"))
         self.assertFalse(app.model_is_loopback("https://example.com/v1/chat/completions"))
+        self.assertFalse(app.model_is_loopback("file://localhost/etc/passwd"))
+        self.assertFalse(app.model_is_loopback("http://user:password@127.0.0.1:11434/"))
+
+    def test_draft_guard_accepts_boundary_statements_but_rejects_diagnosis_and_impersonation(self):
+        self.assertTrue(app.clinical_output_allowed("This is not a diagnosis. I cannot diagnose your symptoms."))
+        self.assertFalse(app.clinical_output_allowed("You likely have anemia."))
+        self.assertFalse(app.clinical_output_allowed("I am your doctor."))
 
     def test_model_output_blocked_if_it_makes_treatment_claim(self):
         with patch.object(app, "MODEL_URL", "http://127.0.0.1:8080/v1/chat/completions"):
@@ -57,7 +64,7 @@ class AgentCoreTests(unittest.TestCase):
 
         with patch.object(app, "MODEL_URL", "http://127.0.0.1:11434/v1/chat/completions"):
             with patch.object(app, "MODEL_NAME", "qwen3:4b"):
-                with patch.object(app, "urlopen", return_value=FakeResponse()) as open_url:
+                with patch.object(app, "model_open", return_value=FakeResponse()) as open_url:
                     answer = app.local_model_answer(
                         "How can I learn about sleep?", app.find_references("sleep"), []
                     )

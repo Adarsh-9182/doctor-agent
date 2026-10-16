@@ -1,5 +1,13 @@
 # Doctor Agent
 
+The local web agent now has a permissioned plugin runtime: install/enable/remove
+custom data-only plugins, inspect actual tool activity, use an optional local
+model tool loop, and produce downloadable visit-brief/checklist drafts. Open
+**Plugins & tools** after starting the app. Read the [plugin contract and guided
+use case](docs/PLUGINS.md) and [agent delivery roadmap](docs/AGENT_ROADMAP.md).
+This runtime update applies to the Python/local-web app; native clients and
+the static mobile PWA retain their existing standalone engines.
+
 A free, local-first AI health companion prototype for broader health education and care preparation. It answers supported general
 health education questions from a small, source-linked library. It can speak
 answers using the browser's built-in speech synthesis. An optional local
@@ -54,6 +62,7 @@ depend on the device. The retrieval-only mode works without a model.
 
 ```sh
 python3 -m unittest discover -s tests -v
+python3 scripts/smoke_agent.py
 ```
 
 ## Roadmap
